@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A 股软件 ETF 投资价值分析</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===========================================
+           VIEWPORT FITTING: MANDATORY BASE STYLES
+           =========================================== */
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0e1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        /* ===========================================
+           CSS CUSTOM PROPERTIES (THEME)
+           =========================================== */
+        :root {
+            /* Colors */
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-accent: #1e293b;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            
+            /* Typography - MUST use clamp() */
+            --title-size: clamp(2rem, 6vw, 4.5rem);
+            --h2-size: clamp(1.5rem, 4vw, 3rem);
+            --h3-size: clamp(1.25rem, 3vw, 2rem);
+            --body-size: clamp(0.875rem, 1.5vw, 1.125rem);
+            --small-size: clamp(0.75rem, 1.2vw, 0.95rem);
+            
+            /* Spacing - MUST use clamp() */
+            --slide-padding: clamp(1.5rem, 4vw, 4rem);
+            --content-gap: clamp(1rem, 2vw, 2rem);
+            --element-gap: clamp(0.5rem, 1vw, 1rem);
+            
+            /* Animation */
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+        }
+
+        /* ===========================================
+           SLIDE CONTAINER
+           =========================================== */
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            padding: var(--slide-padding);
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-height: 100%;
+            overflow: hidden;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ===========================================
+           BACKGROUND EFFECTS
+           =========================================== */
+        .bg-gradient {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at top right, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom left, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===========================================
+           TYPOGRAPHY
+           =========================================== */
+        h1 {
+            font-size: var(--title-size);
+            font-weight: 900;
+            line-height: 1.1;
+            margin: 0 0 var(--element-gap) 0;
+            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: var(--h2-size);
+            font-weight: 700;
+            margin: 0 0 var(--content-gap) 0;
+            color: var(--text-primary);
+        }
+
+        h3 {
+            font-size: var(--h3-size);
+            font-weight: 700;
+            margin: 0 0 var(--element-gap) 0;
+            color: var(--accent-cyan);
+        }
+
+        p, li {
+            font-size: var(--body-size);
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.5rem);
+            color: var(--text-secondary);
+            margin-bottom: var(--content-gap);
+        }
+
+        .meta {
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        /* ===========================================
+           COMPONENTS
+           =========================================== */
+        .highlight {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+            gap: var(--content-gap);
+            margin: var(--content-gap) 0;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px;
+            padding: var(--content-gap);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
+        }
+
+        .card-icon {
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: var(--element-gap);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--content-gap);
+            margin: var(--content-gap) 0;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: var(--content-gap);
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+
+        .stat-value {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+            margin-bottom: var(--element-gap);
+        }
+
+        .stat-label {
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+            margin: var(--content-gap) 0;
+        }
+
+        .bullet-list li {
+            padding: var(--element-gap) 0;
+            padding-left: calc(var(--element-gap) * 2);
+            position: relative;
+        }
+
+        .bullet-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(59, 130, 246, 0.2);
+            z-index: 100;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan) 0%, var(--accent-blue) 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .nav-dots {
+            position: fixed;
+            right: var(--slide-padding);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: var(--element-gap);
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot.active {
+            background: var(--accent-cyan);
+            transform: scale(1.3);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 20px;
+            font-size: var(--small-size);
+            color: var(--accent-cyan);
+            margin: 0 var(--element-gap) var(--element-gap) 0;
+        }
+
+        .chart-placeholder {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: var(--content-gap);
+            text-align: center;
+            margin: var(--content-gap) 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, var(--accent-green) 0%, #059669 100%);
+            border-radius: 20px;
+            font-size: var(--small-size);
+            font-weight: 700;
+            color: white;
+        }
+
+        .badge-warning {
+            background: linear-gradient(135deg, var(--accent-orange) 0%, #d97706 100%);
+        }
+
+        .badge-danger {
+            background: linear-gradient(135deg, var(--accent-red) 0%, #dc2626 100%);
+        }
+
+        /* ===========================================
+           ANIMATIONS
+           =========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal:nth-child(1) { transition-delay: 0.1s; }
+        .reveal:nth-child(2) { transition-delay: 0.2s; }
+        .reveal:nth-child(3) { transition-delay: 0.3s; }
+        .reveal:nth-child(4) { transition-delay: 0.4s; }
+        .reveal:nth-child(5) { transition-delay: 0.5s; }
+
+        /* ===========================================
+           RESPONSIVE BREAKPOINTS
+           =========================================== */
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(1rem, 3vw, 2rem);
+                --content-gap: clamp(0.75rem, 1.5vw, 1.5rem);
+            }
+        }
+
+        @media (max-height: 600px) {
+            :root {
+                --title-size: clamp(1.5rem, 5vw, 2.5rem);
+                --slide-padding: clamp(0.75rem, 2.5vw, 1.5rem);
+            }
+            
+            .nav-dots {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress bar -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Navigation dots -->
+    <nav class="nav-dots" id="navDots"></nav>
+
+    <!-- Slide 1: Title -->
+    <section class="slide title-slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content">
+            <div class="reveal">
+                <div class="meta">股票分析报告 • 2026 年 2 月</div>
+                <h1>A 股软件 ETF<br>投资价值分析</h1>
+                <p class="subtitle">深度解析软件行业 ETF 的投资机会与风险</p>
+                <div style="margin-top: var(--content-gap);">
+                    <span class="badge">
+                        <span>📊</span>
+                        <span>专业分析</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 2: 核心观点 -->
+    <section class="slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content">
+            <h2 class="reveal">核心观点</h2>
+            <div class="card-grid reveal">
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <h3>投资评级</h3>
+                    <p class="highlight" style="font-size: 1.5rem; margin: var(--element-gap) 0;">谨慎推荐</p>
+                    <p>软件行业长期向好，但短期需关注估值波动</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">📈</div>
+                    <h3>适合人群</h3>
+                    <ul class="bullet-list" style="margin-top: var(--element-gap);">
+                        <li>看好科技行业长期发展</li>
+                        <li>能承受中等风险</li>
+                        <li>投资周期 1-3 年</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚖️</div>
+                    <h3>配置建议</h3>
+                    <p class="highlight" style="font-size: 1.5rem; margin: var(--element-gap) 0;">5-15%</p>
+                    <p>占投资组合的合理比例</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 3: 什么是软件 ETF -->
+    <section class="slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content">
+            <h2 class="reveal">什么是软件 ETF？</h2>
+            <div class="reveal" style="margin: var(--content-gap) 0;">
+                <p style="font-size: 1.25rem; margin-bottom: var(--content-gap);">
+                    软件 ETF 是追踪<span class="highlight">软件行业指数</span>的交易所交易基金，一篮子买入软件行业龙头公司股票
+                </p>
+                
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <span class="stat-value">50-100</span>
+                        <span class="stat-label">成分股数量</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">0.5-0.8%</span>
+                        <span class="stat-label">管理费率</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">T+1</span>
+                        <span class="stat-label">交易制度</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">100 元起</span>
+                        <span class="stat-label">投资门槛</span>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: var(--content-gap);">主要软件 ETF 产品</h3>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4 style="margin: 0 0 var(--element-gap) 0; color: var(--accent-cyan);">软件 ETF (515230)</h4>
+                        <p>追踪中证软件服务指数</p>
+                        <p class="meta">规模：~15 亿元</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="margin: 0 0 var(--element-gap) 0; color: var(--accent-cyan);">计算机 ETF (512720)</h4>
+                        <p>追踪中证计算机主题指数</p>
+                        <p class="meta">规模：~50 亿元</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="margin: 0 0 var(--element-gap) 0; color: var(--accent-cyan);">云计算 ETF (516510)</h4>
+                        <p>追踪中证云计算指数</p>
+                        <p class="meta">规模：~20 亿元</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 4: 行业分析 - 利好因素 -->
+    <section class="slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content">
+            <h2 class="reveal">行业分析：利好因素</h2>
+            <div class="card-grid reveal">
+                <div class="card">
+                    <div class="card-icon">🚀</div>
+                    <h3>政策红利</h3>
+                    <ul class="bullet-list">
+                        <li>数字经济国家战略</li>
+                        <li>信创产业扶持政策</li>
+                        <li>国产替代加速推进</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-icon">💡</div>
+                    <h3>技术驱动</h3>
+                    <ul class="bullet-list">
+                        <li>AI 大模型爆发</li>
+                        <li>云计算渗透率提升</li>
+                        <li>企业数字化转型</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-icon">📊</div>
+                    <h3>市场需求</h3>
+                    <ul class="bullet-list">
+                        <li>企业软件支出增长</li>
+                        <li>SaaS 订阅模式成熟</li>
+                        <li>行业解决方案需求</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🌏</div>
+                    <h3>国产替代</h3>
+                    <ul class="bullet-list">
+                        <li>操作系统自主可控</li>
+                        <li>数据库国产化</li>
+                        <li>工业软件突破</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 5: 行业分析 - 风险因素 -->
+    <section class="slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content">
+            <h2 class="reveal">行业分析：风险因素</h2>
+            <div class="card-grid reveal">
+                <div class="card" style="border-color: rgba(245, 158, 11, 0.3);">
+                    <div class="card-icon">⚠️</div>
+                    <h3 style="color: var(--accent-orange);">估值波动</h3>
+                    <p>软件行业 PE 普遍较高，市场情绪变化易导致大幅波动</p>
+                    <span class="tag badge-warning">中高风险</span>
+                </div>
+                <div class="card" style="border-color: rgba(245, 158, 11, 0.3);">
+                    <div class="card-icon">💼</div>
+                    <h3 style="color: var(--accent-orange);">竞争加剧</h3>
+                    <p>行业门槛相对较低，同质化竞争严重，利润率承压</p>
+                    <span class="tag badge-warning">中等风险</span>
+                </div>
+                <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+                    <div class="card-icon">👥</div>
+                    <h3 style="color: var(--accent-red);">人才流失</h3>
+                    <p>核心技术人才竞争激烈，人力成本持续上升</p>
+                    <span class="tag badge-danger">需关注</span>
+                </div>
+                <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+                    <div class="card-icon">📉</div>
+                    <h3 style="color: var(--accent-red);">经济周期</h3>
+                    <p>企业 IT 支出受宏观经济影响，经济下行时预算缩减</p>
+                    <span class="tag badge-danger">周期性风险</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 6: 财务指标分析 -->
+    <section class="slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content">
+            <h2 class="reveal">财务指标分析</h2>
+            <div class="reveal" style="margin: var(--content-gap) 0;">
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <span class="stat-value" style="background: linear-gradient(135deg, var(--accent-green) 0%, #059669 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">25-35%</span>
+                        <span class="stat-label">营收增速 (行业平均)</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value" style="background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-blue) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">15-25%</span>
+                        <span class="stat-label">净利润增速</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value" style="background: linear-gradient(135deg, var(--accent-purple) 0%, #7c3aed 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">40-60 倍</span>
+                        <span class="stat-label">市盈率 PE (TTM)</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value" style="background: linear-gradient(135deg, var(--accent-orange) 0%, #d97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">5-8%</span>
+                        <span class="stat-label">研发投入占比</span>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: var(--content-gap);">估值对比</h3>
+                <div class="chart-placeholder reveal">
+                    <div style="display: flex; justify-content: space-around; align-items: flex-end; height: 200px; padding: var(--content-gap);">
+                        <div style="text-align: center;">
+                            <div style="width: 60px; height: 120px; background: linear-gradient(180deg, var(--accent-blue) 0%, var(--accent-cyan) 100%); border-radius: 8px 8px 0 0; margin: 0 auto 10px;"></div>
+                            <div class="meta">软件 ETF<br>40-60 倍</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="width: 60px; height: 80px; background: linear-gradient(180deg, var(--accent-purple) 0%, #6d28d9 100%); border-radius: 8px 8px 0 0; margin: 0 auto 10px;"></div>
+                            <div class="meta">创业板指<br>25-35 倍</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="width: 60px; height: 50px; background: linear-gradient(180deg, var(--accent-green) 0%, #059669 100%); border-radius: 8px 8px 0 0; margin: 0 auto 10px;"></div>
+                            <div class="meta">沪深 300<br>10-15 倍</div>
+                        </div>
+                    </div>
+                    <p class="meta">* 数据为行业平均水平，仅供参考</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 7: 前十大成分股 -->
+    <section class="slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content">
+            <h2 class="reveal">前十大成分股 (示例)</h2>
+            <div class="reveal" style="margin: var(--content-gap) 0;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--element-gap);">
+                    <div class="card">
+                        <h4 style="margin: 0 0 var(--element-gap) 0; color: var(--text-primary);">金山办公</h4>
+                        <p class="meta">办公软件龙头</p>
+                        <p class="highlight" style="margin-top: var(--element-gap);">权重：~8%</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="margin: 0 0 var(--element-gap) 0; color: var(--text-primary);">恒生电子</h4>
+                        <p class="meta">金融 IT 龙头</p>
+                        <p class="highlight" style="margin-top: var(--element-gap);">权重：~7%</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="margin: 0 0 var(--element-gap) 0; color: var(--text-primary);">用友网络</h4>
+                        <p class="meta">企业管理软件</p>
+                        <p class="highlight" style="margin-top: var(--element-gap);">权重：~6%</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="margin: 0 0 var(--element-gap) 0; color: var(--text-primary);">广联达</h4>
+                        <p class="meta">建筑信息化</p>
+                        <p class="highlight" style="margin-top: var(--element-gap);">权重：~5%</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="margin: 0 0 var(--element-gap) 0; color: var(--text-primary);">中科曙光</h4>
+                        <p class="meta">高性能计算</p>
+                        <p class="highlight" style="margin-top: var(--element-gap);">权重：~5%</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="margin: 0 0 var(--element-gap) 0; color: var(--text-primary);">浪潮信息</h4>
+                        <p class="meta">服务器龙头</p>
+                        <p class="highlight" style="margin-top: var(--element-gap);">权重：~4%</p>
+                    </div>
+                </div>
+                <p class="meta" style="margin-top: var(--content-gap);">* 成分股及权重会定期调整，以基金公司公告为准</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 8: 投资策略建议 -->
+    <section class="slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content">
+            <h2 class="reveal">投资策略建议</h2>
+            <div class="card-grid reveal">
+                <div class="card" style="border-color: var(--accent-green);">
+                    <div class="card-icon">✅</div>
+                    <h3 style="color: var(--accent-green);">建议操作</h3>
+                    <ul class="bullet-list">
+                        <li>分批建仓，避免一次性买入</li>
+                        <li>定投策略，平摊成本</li>
+                        <li>设置止盈止损点</li>
+                        <li>长期持有，分享行业成长</li>
+                    </ul>
+                </div>
+                <div class="card" style="border-color: var(--accent-red);">
+                    <div class="card-icon">❌</div>
+                    <h3 style="color: var(--accent-red);">避免操作</h3>
+                    <ul class="bullet-list">
+                        <li>追涨杀跌，情绪化交易</li>
+                        <li>重仓单一行业 ETF</li>
+                        <li>短期频繁买卖</li>
+                        <li>忽视估值高位风险</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="reveal" style="margin-top: var(--content-gap);">
+                <h3>仓位管理建议</h3>
+                <div style="display: flex; gap: var(--content-gap); margin-top: var(--element-gap); flex-wrap: wrap;">
+                    <span class="tag">保守型：5-8%</span>
+                    <span class="tag">稳健型：8-12%</span>
+                    <span class="tag">进取型：12-20%</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 9: 总结与风险提示 -->
+    <section class="slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content">
+            <h2 class="reveal">总结与风险提示</h2>
+            <div class="reveal" style="margin: var(--content-gap) 0;">
+                <div class="card-grid">
+                    <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(30, 41, 59, 0.5) 100%);">
+                        <h3 style="color: var(--accent-cyan); margin-bottom: var(--element-gap);">📌 核心结论</h3>
+                        <ul class="bullet-list">
+                            <li>软件行业长期成长逻辑清晰</li>
+                            <li>政策支持 + 技术驱动双轮驱动</li>
+                            <li>适合中长期配置</li>
+                            <li>建议采用定投策略</li>
+                        </ul>
+                    </div>
+                    <div class="card" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.5) 100%);">
+                        <h3 style="color: var(--accent-orange); margin-bottom: var(--element-gap);">⚠️ 重要风险提示</h3>
+                        <ul class="bullet-list">
+                            <li>历史业绩不代表未来表现</li>
+                            <li>基金投资需谨慎，入市有风险</li>
+                            <li>本报告仅供参考，不构成投资建议</li>
+                            <li>投资前请仔细阅读基金招募说明书</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: var(--content-gap); text-align: center;">
+                    <p class="meta" style="font-size: 0.85rem;">
+                        报告日期：2026 年 2 月 25 日<br>
+                        数据来源：公开资料整理，仅供参考
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 10: 结束页 -->
+    <section class="slide">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="slide-content" style="text-align: center;">
+            <div class="reveal">
+                <div style="font-size: 4rem; margin-bottom: var(--content-gap);">📊</div>
+                <h2>感谢观看</h2>
+                <p class="subtitle" style="margin-top: var(--content-gap);">理性投资 • 价值投资 • 长期投资</p>
+                <div style="margin-top: var(--content-gap);">
+                    <span class="badge">
+                        <span>✨</span>
+                        <span>投资有风险，入市需谨慎</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        /* ===========================================
+           SLIDE PRESENTATION CONTROLLER
+           =========================================== */
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.progressFill = document.getElementById('progressFill');
+                this.navDots = document.getElementById('navDots');
+                this.currentIndex = 0;
+                this.init();
+            }
+
+            init() {
+                // Create navigation dots
+                this.slides.forEach((_, index) => {
+                    const dot = document.createElement('div');
+                    dot.className = 'nav-dot' + (index === 0 ? ' active' : '');
+                    dot.addEventListener('click', () => this.goToSlide(index));
+                    this.navDots.appendChild(dot);
+                });
+
+                // Setup intersection observer
+                const observer = new IntersectionObserver(
+                    (entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                entry.target.classList.add('visible');
+                                this.updateProgress(entry.target);
+                            }
+                        });
+                    },
+                    { threshold: 0.3 }
+                );
+
+                this.slides.forEach(slide => observer.observe(slide));
+
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+                        e.preventDefault();
+                        this.nextSlide();
+                    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        this.prevSlide();
+                    }
+                });
+
+                // Mouse wheel navigation
+                let wheelTimeout;
+                document.addEventListener('wheel', (e) => {
+                    clearTimeout(wheelTimeout);
+                    wheelTimeout = setTimeout(() => {
+                        if (e.deltaY > 0) {
+                            this.nextSlide();
+                        } else {
+                            this.prevSlide();
+                        }
+                    }, 50);
+                });
+
+                // Touch support
+                let touchStartY = 0;
+                document.addEventListener('touchstart', (e) => {
+                    touchStartY = e.touches[0].clientY;
+                });
+
+                document.addEventListener('touchend', (e) => {
+                    const touchEndY = e.changedTouches[0].clientY;
+                    const diff = touchStartY - touchEndY;
+                    if (Math.abs(diff) > 50) {
+                        if (diff > 0) {
+                            this.nextSlide();
+                        } else {
+                            this.prevSlide();
+                        }
+                    }
+                });
+            }
+
+            updateProgress(slide) {
+                const index = Array.from(this.slides).indexOf(slide);
+                this.currentIndex = index;
+                const progress = ((index + 1) / this.slides.length) * 100;
+                this.progressFill.style.width = progress + '%';
+
+                // Update dots
+                this.navDots.querySelectorAll('.nav-dot').forEach((dot, i) => {
+                    dot.classList.toggle('active', i === index);
+                });
+            }
+
+            goToSlide(index) {
+                this.slides[index].scrollIntoView({ behavior: 'smooth' });
+            }
+
+            nextSlide() {
+                if (this.currentIndex < this.slides.length - 1) {
+                    this.goToSlide(this.currentIndex + 1);
+                }
+            }
+
+            prevSlide() {
+                if (this.currentIndex > 0) {
+                    this.goToSlide(this.currentIndex - 1);
+                }
+            }
+        }
+
+        // Initialize
+        new SlidePresentation();
+    </script>
+</body>
+</html>
