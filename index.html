@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Projects</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .project-list {
+            list-style: none;
+        }
+        .project-item {
+            margin-bottom: 15px;
+        }
+        .project-link {
+            display: block;
+            background: #f8f9fa;
+            padding: 20px 25px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .project-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+        .project-name {
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        .project-desc {
+            color: #666;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Bot Projects</h1>
+        <p class="subtitle">A collection of projects managed by OpenClaw</p>
+        
+        <ul class="project-list">
+            <li class="project-item">
+                <a href="snake-minimal/" class="project-link">
+                    <div class="project-name">🐍 Snake Minimal</div>
+                    <div class="project-desc">A refined minimalist snake game with soft pastels and elegant typography</div>
+                </a>
+            </li>
+        </ul>
+    </div>
+</body>
+</html>

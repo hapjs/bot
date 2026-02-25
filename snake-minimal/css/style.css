@@ -1,0 +1,579 @@
+/* ============================================
+   SNAKE MINIMAL - Refined Minimalism
+   Design: Soft pastels, generous whitespace,
+   elegant typography, subtle animations
+   ============================================ */
+
+:root {
+    /* Soft Pastel Palette */
+    --mint: #b8e6d5;
+    --sage: #a8d5ba;
+    --peach: #ffdac4;
+    --lavender: #e8dff5;
+    --blush: #f4c2c2;
+    --cream: #faf8f5;
+    
+    /* Neutrals */
+    --charcoal: #2d2d2d;
+    --slate: #5a5a5a;
+    --stone: #9a9a9a;
+    --mist: #e8e6e3;
+    
+    /* Accents */
+    --accent-coral: #ff8b7a;
+    --accent-teal: #5dd4c4;
+    --accent-gold: #f0c14b;
+    
+    /* Typography */
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    
+    /* Spacing */
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+    
+    /* Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.06);
+    --shadow-medium: 0 8px 40px rgba(0, 0, 0, 0.08);
+    --shadow-large: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   Reset & Base
+   ============================================ */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-mono);
+    background: var(--cream);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-lg);
+    color: var(--charcoal);
+    overflow: hidden;
+    position: relative;
+}
+
+/* ============================================
+   Gradient Orbs (Background Atmosphere)
+   ============================================ */
+.gradient-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+    z-index: 0;
+    animation: float 20s ease-in-out infinite;
+}
+
+.orb-1 {
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(135deg, var(--mint) 0%, var(--sage) 100%);
+    top: -200px;
+    left: -200px;
+    animation-delay: 0s;
+}
+
+.orb-2 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, var(--lavender) 0%, var(--blush) 100%);
+    bottom: -150px;
+    right: -150px;
+    animation-delay: -7s;
+}
+
+.orb-3 {
+    width: 350px;
+    height: 350px;
+    background: linear-gradient(135deg, var(--peach) 0%, var(--accent-coral) 100%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: -14s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -30px) scale(1.05); }
+    50% { transform: translate(-20px, 20px) scale(0.95); }
+    75% { transform: translate(20px, 30px) scale(1.02); }
+}
+
+/* ============================================
+   Game Container
+   ============================================ */
+.game-container {
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.title-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.game-title {
+    font-family: var(--font-display);
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--charcoal);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.game-subtitle {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--stone);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+.score-section {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.score-card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: var(--shadow-soft);
+    min-width: 100px;
+}
+
+.score-card.best {
+    background: linear-gradient(135deg, var(--peach) 0%, var(--accent-coral) 100%);
+    color: white;
+}
+
+.score-label {
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--stone);
+}
+
+.score-card.best .score-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.score-value {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--charcoal);
+}
+
+.score-card.best .score-value {
+    color: white;
+}
+
+/* ============================================
+   Main Game Area
+   ============================================ */
+.game-main {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: var(--space-lg);
+    align-items: start;
+}
+
+/* Canvas Frame */
+.canvas-frame {
+    position: relative;
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-md);
+    box-shadow: var(--shadow-large);
+}
+
+.game-canvas {
+    display: block;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, #f8f6f3 0%, #f0ede8 100%);
+}
+
+.canvas-overlay {
+    position: absolute;
+    inset: var(--space-md);
+    border-radius: var(--radius-lg);
+    pointer-events: none;
+}
+
+/* Sidebar */
+.game-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-medium);
+}
+
+.sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.sidebar-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--stone);
+}
+
+/* Tempo Selector */
+.tempo-selector {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.tempo-btn {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: var(--space-sm) var(--space-xs);
+    background: var(--mist);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: lowercase;
+}
+
+.tempo-btn:hover {
+    background: var(--mint);
+    color: var(--charcoal);
+}
+
+.tempo-btn.active {
+    background: var(--accent-teal);
+    color: white;
+}
+
+/* Buttons */
+.control-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    text-transform: lowercase;
+}
+
+.btn-icon {
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-teal) 0%, var(--mint) 100%);
+    color: var(--charcoal);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(93, 212, 196, 0.4);
+}
+
+.btn-secondary {
+    background: var(--mist);
+    color: var(--charcoal);
+}
+
+.btn-secondary:hover {
+    background: var(--lavender);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--charcoal);
+    border: 1.5px solid var(--mist);
+}
+
+.btn-outline:hover {
+    border-color: var(--accent-teal);
+    color: var(--accent-teal);
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.game-footer {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-xl);
+    flex-wrap: wrap;
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-md) var(--space-lg);
+    box-shadow: var(--shadow-soft);
+}
+
+.key-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+kbd {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    background: var(--mist);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    color: var(--charcoal);
+}
+
+.hint-label {
+    font-size: 0.75rem;
+    color: var(--stone);
+    text-transform: lowercase;
+}
+
+.touch-hint {
+    font-size: 1rem;
+}
+
+/* ============================================
+   Modal
+   ============================================ */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(45, 45, 45, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal-content {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    animation: modalEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.modal-icon {
+    font-size: 3rem;
+    color: var(--accent-coral);
+}
+
+.modal-title {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--charcoal);
+    letter-spacing: -0.02em;
+}
+
+.modal-body {
+    margin-bottom: var(--space-lg);
+}
+
+.final-score {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+.fs-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--stone);
+}
+
+.fs-value {
+    font-family: var(--font-display);
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-teal) 0%, var(--mint) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.new-record-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    background: linear-gradient(135deg, var(--peach) 0%, var(--accent-coral) 100%);
+    color: white;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 600;
+    animation: badgePulse 1.5s ease-in-out infinite;
+}
+
+.badge-icon {
+    font-size: 1rem;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 900px) {
+    .game-main {
+        grid-template-columns: 1fr;
+    }
+    
+    .game-sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .sidebar-section {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .game-title {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: var(--space-sm);
+    }
+    
+    .game-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .title-section {
+        align-items: center;
+    }
+    
+    .game-title {
+        font-size: 2rem;
+    }
+    
+    .score-section {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .game-sidebar {
+        flex-direction: column;
+    }
+    
+    .tempo-selector {
+        flex-direction: column;
+    }
+    
+    .control-buttons {
+        flex-direction: row;
+    }
+    
+    .btn {
+        flex: 1;
+    }
+    
+    .game-footer {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+}
