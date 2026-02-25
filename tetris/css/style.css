@@ -1,0 +1,593 @@
+/* ============================================
+   TETRIS NEON - Cyberpunk Night City Aesthetic
+   Design: Dark background with neon glow effects,
+   grid patterns, and futuristic UI
+   ============================================ */
+
+:root {
+    /* Neon Colors - Each tetromino has a unique neon color */
+    --neon-cyan: #00f5ff;
+    --neon-pink: #ff00ff;
+    --neon-purple: #bd00ff;
+    --neon-yellow: #ffff00;
+    --neon-green: #00ff00;
+    --neon-orange: #ff8800;
+    --neon-blue: #0066ff;
+    --neon-red: #ff0044;
+    
+    /* Background */
+    --bg-dark: #0a0a0f;
+    --bg-darker: #050508;
+    --bg-panel: #12121a;
+    --bg-grid: rgba(0, 245, 255, 0.03);
+    
+    /* Text */
+    --text-primary: #ffffff;
+    --text-secondary: #8888aa;
+    --text-dim: #444455;
+    
+    /* Typography */
+    --font-display: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+    
+    /* Effects */
+    --glow-cyan: 0 0 10px rgba(0, 245, 255, 0.5), 0 0 20px rgba(0, 245, 255, 0.3);
+    --glow-pink: 0 0 10px rgba(255, 0, 255, 0.5), 0 0 20px rgba(255, 0, 255, 0.3);
+    --glow-purple: 0 0 10px rgba(189, 0, 255, 0.5);
+    --glow-yellow: 0 0 10px rgba(255, 255, 0, 0.5);
+    --glow-green: 0 0 10px rgba(0, 255, 0, 0.5);
+    --glow-orange: 0 0 10px rgba(255, 136, 0, 0.5);
+    --glow-blue: 0 0 10px rgba(0, 102, 255, 0.5);
+    --glow-red: 0 0 10px rgba(255, 0, 68, 0.5);
+    
+    /* Spacing */
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    
+    /* Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
+
+/* ============================================
+   Reset & Base
+   ============================================ */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-body);
+    background: radial-gradient(ellipse at center, #1a1a2e 0%, var(--bg-dark) 50%, var(--bg-darker) 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-md);
+    color: var(--text-primary);
+    overflow: hidden;
+    position: relative;
+}
+
+/* ============================================
+   Neon Grid Background
+   ============================================ */
+.neon-grid {
+    position: fixed;
+    inset: 0;
+    background-image: 
+        linear-gradient(var(--bg-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes gridMove {
+    0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+    100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+}
+
+/* ============================================
+   Game Wrapper
+   ============================================ */
+.game-wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.neon-title {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    text-shadow: 
+        0 0 10px var(--neon-cyan),
+        0 0 20px var(--neon-cyan),
+        0 0 30px var(--neon-cyan);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    animation: titlePulse 2s ease-in-out infinite;
+}
+
+.title-icon {
+    font-size: 2.5rem;
+    color: var(--neon-cyan);
+}
+
+@keyframes titlePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.9; }
+}
+
+.stats-panel {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.stat-box {
+    background: var(--bg-panel);
+    border: 1px solid rgba(0, 245, 255, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    min-width: 100px;
+    text-align: center;
+    box-shadow: inset 0 0 20px rgba(0, 245, 255, 0.1);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+}
+
+/* ============================================
+   Main Game Area
+   ============================================ */
+.game-main {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: var(--space-lg);
+    align-items: start;
+}
+
+/* Game Board */
+.game-board-container {
+    position: relative;
+    background: var(--bg-panel);
+    border: 2px solid rgba(0, 245, 255, 0.3);
+    border-radius: var(--radius-lg);
+    padding: var(--space-sm);
+    box-shadow: 
+        0 0 30px rgba(0, 245, 255, 0.2),
+        inset 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.game-canvas {
+    display: block;
+    border-radius: var(--radius-md);
+    background: var(--bg-darker);
+}
+
+.board-overlay {
+    position: absolute;
+    inset: var(--space-sm);
+    border-radius: var(--radius-md);
+    background: rgba(10, 10, 15, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+}
+
+.overlay-content {
+    text-align: center;
+    animation: overlayPulse 1.5s ease-in-out infinite;
+}
+
+.overlay-icon {
+    display: block;
+    font-size: 4rem;
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+    margin-bottom: var(--space-sm);
+}
+
+.overlay-text {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: 0 0 10px var(--neon-cyan);
+    margin-bottom: var(--space-xs);
+}
+
+.overlay-subtext {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+}
+
+@keyframes overlayPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.02); }
+}
+
+/* Sidebar */
+.game-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.sidebar-panel {
+    background: var(--bg-panel);
+    border: 1px solid rgba(0, 245, 255, 0.2);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+.panel-title {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+    letter-spacing: 0.15em;
+    margin-bottom: var(--space-sm);
+    text-align: center;
+}
+
+.next-piece-container,
+.hold-piece-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 120px;
+}
+
+.hold-hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: var(--space-xs);
+    letter-spacing: 0.1em;
+}
+
+/* Controls List */
+.controls-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.control-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+kbd {
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    background: rgba(0, 245, 255, 0.1);
+    border: 1px solid rgba(0, 245, 255, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 5px rgba(0, 245, 255, 0.5);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.btn-icon {
+    font-size: 1rem;
+}
+
+.btn-start {
+    background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-blue) 100%);
+    color: var(--bg-dark);
+    box-shadow: var(--glow-cyan);
+}
+
+.btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(0, 245, 255, 0.6);
+}
+
+.btn-pause {
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    border: 1px solid rgba(0, 245, 255, 0.3);
+}
+
+.btn-pause:hover {
+    background: rgba(0, 245, 255, 0.1);
+    border-color: var(--neon-cyan);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-blue) 100%);
+    color: var(--bg-dark);
+    box-shadow: var(--glow-cyan);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(0, 245, 255, 0.6);
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.game-footer {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-panel);
+    border: 1px solid rgba(0, 245, 255, 0.2);
+    border-radius: var(--radius-md);
+}
+
+.footer-text {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+}
+
+/* ============================================
+   Game Over Modal
+   ============================================ */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+}
+
+.modal-content {
+    background: var(--bg-panel);
+    border: 2px solid var(--neon-cyan);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: var(--glow-cyan);
+    animation: modalEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    margin-bottom: var(--space-lg);
+}
+
+.modal-icon {
+    display: block;
+    font-size: 4rem;
+    color: var(--neon-red);
+    text-shadow: var(--glow-red);
+    margin-bottom: var(--space-sm);
+}
+
+.modal-title {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--neon-red);
+    text-shadow: var(--glow-red);
+    letter-spacing: 0.2em;
+}
+
+.modal-body {
+    margin-bottom: var(--space-lg);
+}
+
+.final-stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-xs) var(--space-sm);
+    background: rgba(0, 245, 255, 0.05);
+    border-radius: var(--radius-sm);
+}
+
+.stat-row-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+}
+
+.stat-row-value {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+}
+
+.highscore-display {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    background: linear-gradient(135deg, var(--neon-yellow) 0%, var(--neon-orange) 100%);
+    color: var(--bg-dark);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    animation: badgePulse 1s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.hs-icon {
+    font-size: 1.2rem;
+}
+
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 800px) {
+    .game-main {
+        grid-template-columns: 1fr;
+    }
+    
+    .game-sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .sidebar-panel {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .neon-title {
+        font-size: 2rem;
+    }
+    
+    .stats-panel {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: var(--space-xs);
+    }
+    
+    .game-header {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .neon-title {
+        font-size: 1.75rem;
+    }
+    
+    .game-board-container {
+        padding: var(--space-xs);
+    }
+    
+    .game-canvas {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .sidebar-panel {
+        width: 100%;
+    }
+    
+    .action-buttons {
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .game-footer {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}
