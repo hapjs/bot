@@ -3,82 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot Projects</title>
+    <title>Bot Projects - OpenClaw</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1e2e 50%, #0f1419 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            padding: 2rem;
+            color: #ffffff;
         }
+
         .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            margin: 0 auto;
         }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
         h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5em;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
+
         .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            color: #94a3b8;
         }
-        .project-list {
-            list-style: none;
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
         }
-        .project-item {
-            margin-bottom: 15px;
-        }
-        .project-link {
-            display: block;
-            background: #f8f9fa;
-            padding: 20px 25px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: #333;
+
+        .project-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
             transition: all 0.3s ease;
-            border: 2px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
         }
-        .project-link:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            border-color: #667eea;
+
+        .project-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
         }
-        .project-name {
-            font-size: 1.3em;
+
+        .project-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .project-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        .project-description {
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .project-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #3b82f6;
             font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
         }
-        .project-desc {
-            color: #666;
-            margin-top: 5px;
-            font-size: 0.9em;
+
+        .project-link:hover {
+            color: #06b6d4;
+        }
+
+        .project-link::after {
+            content: '→';
+            transition: transform 0.2s ease;
+        }
+
+        .project-card:hover .project-link::after {
+            transform: translateX(4px);
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #60a5fa;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .badge-new {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .github-link:hover {
+            color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Bot Projects</h1>
-        <p class="subtitle">A collection of projects managed by OpenClaw</p>
-        
-        <ul class="project-list">
-            <li class="project-item">
-                <a href="snake-minimal/" class="project-link">
-                    <div class="project-name">🐍 Snake Minimal</div>
-                    <div class="project-desc">A refined minimalist snake game with soft pastels and elegant typography</div>
-                </a>
-            </li>
-        </ul>
+        <header>
+            <h1>🤖 Bot Projects</h1>
+            <p class="subtitle">A collection of projects managed by OpenClaw</p>
+        </header>
+
+        <main class="projects-grid">
+            <!-- ETF Analysis -->
+            <a href="etf-analysis/" class="project-card">
+                <div class="badge badge-new">✨ NEW</div>
+                <div class="project-icon">📊</div>
+                <h2 class="project-title">A 股软件 ETF 投资价值分析</h2>
+                <p class="project-description">
+                    专业的 ETF 投资价值分析演示文稿，包含行业分析、财务指标、成分股解析、投资策略建议等 10 页完整内容
+                </p>
+                <div class="tags">
+                    <span class="tag">📈 金融分析</span>
+                    <span class="tag">📊 演示文稿</span>
+                    <span class="tag">💼 投资建议</span>
+                </div>
+                <div class="project-link">访问演示文稿</div>
+            </a>
+
+            <!-- Tetris -->
+            <a href="tetris/" class="project-card">
+                <div class="project-icon">🎮</div>
+                <h2 class="project-title">TETRIS • Neon</h2>
+                <p class="project-description">
+                    经典俄罗斯方块游戏，霓虹赛博朋克风格，支持下一个方块预览、持有功能、幽灵方块、硬降落等完整游戏特性
+                </p>
+                <div class="tags">
+                    <span class="tag">🎮 经典游戏</span>
+                    <span class="tag">💜 赛博朋克</span>
+                    <span class="tag">⌨️ 键盘控制</span>
+                </div>
+                <div class="project-link">开始游戏</div>
+            </a>
+
+            <!-- Snake Minimal -->
+            <a href="snake-minimal/" class="project-card">
+                <div class="project-icon">🐍</div>
+                <h2 class="project-title">Snake • Minimal</h2>
+                <p class="project-description">
+                    精致极简风格的贪吃蛇游戏，柔和粉彩配色，动态渐变背景，优雅字体组合，带来不一样的视觉体验
+                </p>
+                <div class="tags">
+                    <span class="tag">🎮 休闲游戏</span>
+                    <span class="tag">🎨 极简设计</span>
+                    <span class="tag">🌈 柔和配色</span>
+                </div>
+                <div class="project-link">开始游戏</div>
+            </a>
+        </main>
+
+        <footer>
+            <p style="margin-bottom: 1rem;">Built with ❤️ by OpenClaw</p>
+            <a href="https://github.com/hapjs/bot" class="github-link" target="_blank" rel="noopener">
+                <span>📦</span>
+                <span>View on GitHub</span>
+                <span>@hapjs/bot</span>
+            </a>
+        </footer>
     </div>
+
+    <script>
+        // Add click animation
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href) {
+                    e.preventDefault();
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        window.location.href = href;
+                    }, 150);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
