@@ -14,12 +14,16 @@
             user-select: none;
         }
 
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+        }
+
         body {
             font-family: 'Microsoft YaHei', Arial, sans-serif;
             background: linear-gradient(135deg, #1a5f3f 0%, #0d3d26 100%);
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
             touch-action: none;
         }
 
@@ -56,6 +60,49 @@
             .game-table { display: none; }
         }
 
+        /* 超小屏横屏优化 */
+        @media (max-height: 450px) {
+            .tile {
+                width: 26px;
+                height: 36px;
+                font-size: 0.75em;
+            }
+
+            .current-draw .tile {
+                width: 34px;
+                height: 48px;
+            }
+
+            .discard-zone {
+                width: 28vw;
+                height: 22vh;
+            }
+
+            .btn {
+                padding: 5px 9px;
+                font-size: 0.75em;
+            }
+
+            .player-name {
+                font-size: 0.75em;
+            }
+
+            .player-hand {
+                padding: 3px;
+                gap: 2px;
+            }
+
+            .controls {
+                gap: 5px;
+                padding: 6px 10px;
+            }
+
+            .game-info {
+                font-size: 0.75em;
+                padding: 6px 10px;
+            }
+        }
+
         /* 游戏桌台 */
         .game-table {
             width: 100vw;
@@ -69,22 +116,22 @@
         /* 中央弃牌区 */
         .discard-zone {
             position: absolute;
-            width: 40vw;
-            height: 35vh;
+            width: 35vw;
+            height: 30vh;
             background: rgba(0, 0, 0, 0.2);
-            border: 3px solid rgba(255, 215, 0, 0.3);
-            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
             display: grid;
             grid-template-columns: repeat(6, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            gap: 4px;
-            padding: 10px;
+            gap: 3px;
+            padding: 5px;
             z-index: 10;
         }
 
         .discard-slot {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
+            border-radius: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -93,7 +140,7 @@
         .discard-slot .tile {
             width: 100%;
             height: 100%;
-            font-size: 0.9em;
+            font-size: 0.75em;
         }
 
         /* 玩家区域 */
@@ -107,21 +154,21 @@
         .player-name {
             color: #ffd700;
             font-weight: bold;
-            font-size: 1em;
-            margin-bottom: 5px;
+            font-size: 0.85em;
+            margin-bottom: 3px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
             white-space: nowrap;
         }
 
         .player-hand {
             display: flex;
-            gap: 3px;
+            gap: 2px;
             background: rgba(0, 0, 0, 0.3);
-            padding: 8px;
-            border-radius: 8px;
+            padding: 5px;
+            border-radius: 6px;
             overflow-x: auto;
             overflow-y: hidden;
-            max-width: 45vw;
+            max-width: 50vw;
             scrollbar-width: none;
         }
 
@@ -129,71 +176,83 @@
 
         /* 下方玩家（自己） */
         .player-bottom {
-            bottom: 8vh;
+            bottom: 5vh;
             left: 50%;
             transform: translateX(-50%);
         }
 
         .player-bottom .player-hand {
             flex-direction: row;
-            max-width: 60vw;
+            max-width: 70vw;
         }
 
         /* 上方玩家（对家） */
         .player-top {
-            top: 2vh;
+            top: 1vh;
             left: 50%;
             transform: translateX(-50%) rotate(180deg);
         }
 
+        .player-top .player-hand {
+            max-width: 50vw;
+        }
+
         /* 左侧玩家 */
         .player-left {
-            left: 2vw;
+            left: 1vw;
             top: 50%;
             transform: translateY(-50%) rotate(90deg);
             transform-origin: center;
         }
 
+        .player-left .player-hand {
+            max-width: 40vw;
+        }
+
         /* 右侧玩家 */
         .player-right {
-            right: 2vw;
+            right: 1vw;
             top: 50%;
             transform: translateY(-50%) rotate(-90deg);
             transform-origin: center;
         }
 
+        .player-right .player-hand {
+            max-width: 40vw;
+        }
+
         /* 麻将牌 */
         .tile {
-            width: 45px;
-            height: 62px;
+            width: 32px;
+            height: 44px;
             background: linear-gradient(145deg, #fff 0%, #f0f0f0 100%);
-            border: 2px solid #888;
-            border-radius: 6px;
+            border: 1px solid #888;
+            border-radius: 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
+            font-size: 0.9em;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.8);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.8);
             flex-shrink: 0;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .tile:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
         .tile.selected {
-            transform: translateY(-15px);
-            box-shadow: 0 8px 16px rgba(255, 215, 0, 0.6);
+            transform: translateY(-10px);
+            box-shadow: 0 5px 12px rgba(255, 215, 0, 0.6);
             border-color: #ffd700;
         }
 
-        .tile-number { font-size: 1.1em; }
-        .tile-suit { font-size: 0.7em; }
+        .tile-number { font-size: 1em; }
+        .tile-suit { font-size: 0.65em; }
 
         /* 万 - 红色 */
         .tile[data-type="wan"] .tile-number { color: #c00; }
@@ -211,26 +270,27 @@
         /* 控制按钮 */
         .controls {
             position: absolute;
-            bottom: 2vh;
+            bottom: 1vh;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
+            gap: 8px;
             z-index: 100;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px 15px;
-            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 12px;
+            border-radius: 8px;
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 6px 14px;
             border: none;
-            border-radius: 8px;
-            font-size: 1em;
+            border-radius: 6px;
+            font-size: 0.85em;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            white-space: nowrap;
         }
 
         .btn:active { transform: scale(0.95); }
@@ -273,7 +333,7 @@
         /* 当前摸牌指示 */
         .current-draw {
             position: absolute;
-            bottom: 8vh;
+            bottom: 6vh;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -283,9 +343,9 @@
         }
 
         .current-draw .tile {
-            width: 55px;
-            height: 75px;
-            font-size: 1.3em;
+            width: 42px;
+            height: 58px;
+            font-size: 1.1em;
             animation: drawPulse 1s infinite;
         }
 
@@ -329,13 +389,13 @@
             display: flex;
             flex-wrap: wrap;
             gap: 2px;
-            max-width: 150px;
+            max-width: 120px;
         }
 
         .player-discards .tile {
-            width: 28px;
-            height: 38px;
-            font-size: 0.7em;
+            width: 24px;
+            height: 34px;
+            font-size: 0.65em;
         }
 
         .player-left .player-discards { right: -120px; top: 0; }
