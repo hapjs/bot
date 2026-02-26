@@ -14,6 +14,19 @@ html, body {
   background: #1a5c2a;
   font-family: 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif;
   user-select: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ===== 超小屏优化 ===== */
+@media (max-height: 400px) {
+  #app {
+    grid-template-rows: 18% 64% 18%;
+    grid-template-columns: 15% 70% 15%;
+  }
+  .tile { width: 24px !important; height: 32px !important; font-size: 10px !important; }
+  .player-area { padding: 2px !important; }
+  .action-bar { padding: 4px !important; }
+  .action-bar button { padding: 6px 10px !important; font-size: 11px !important; }
 }
 
 /* ===== 横屏强制提示 ===== */
@@ -91,8 +104,14 @@ html, body {
   display: flex; flex-direction: column;
   align-items: stretch; justify-content: flex-start;
   gap: 4px; position: relative;
-  padding: 4px; overflow: hidden;
+  padding: 4px; overflow: visible;
 }
+
+/* 优化布局 - 确保内容完整显示 */
+#area-bottom { overflow: visible; }
+#area-top { overflow: visible; }
+#area-left { overflow: visible; }
+#area-right { overflow: visible; }
 
 /* ===== 牌面样式 ===== */
 .tile {
@@ -294,18 +313,40 @@ html, body {
 .score-item.me { color: #ffd700; }
 
 /* ===== 响应式牌尺寸 ===== */
-/* 底部玩家手牌 - 较大 */
-#area-bottom .tile { width: 34px; height: 48px; font-size: 12px; }
+/* 底部玩家手牌 - 较大，可滚动 */
+#area-bottom .tiles-row {
+  display: flex; gap: 2px; overflow-x: auto; overflow-y: hidden;
+  padding: 4px 2px; min-height: 56px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#area-bottom .tiles-row::-webkit-scrollbar { display: none; }
+#area-bottom .tile { width: 34px; height: 48px; font-size: 12px; flex-shrink: 0; }
 #area-bottom .tile .rank { font-size: 14px; }
 #area-bottom .tile .suit { font-size: 9px; }
 
 /* 对家（上方）- 中等，因为横向排列 */
-#area-top .tile { width: 22px; height: 32px; font-size: 8px; }
+#area-top .tiles-row {
+  display: flex; gap: 1px; overflow-x: auto; overflow-y: hidden;
+  padding: 2px; min-height: 36px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#area-top .tiles-row::-webkit-scrollbar { display: none; }
+#area-top .tile { width: 22px; height: 32px; font-size: 8px; flex-shrink: 0; }
 #area-top .tile .rank { font-size: 10px; }
 #area-top .tile .suit { font-size: 6px; }
 
 /* 左右家 - 竖向，稍小 */
-#area-left .tile, #area-right .tile { width: 20px; height: 28px; font-size: 7px; }
+#area-left .tiles-row, #area-right .tiles-row {
+  display: flex; flex-direction: column; gap: 1px;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 2px; min-width: 24px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#area-left .tiles-row::-webkit-scrollbar, #area-right .tiles-row::-webkit-scrollbar { display: none; }
+#area-left .tile, #area-right .tile { width: 20px; height: 28px; font-size: 7px; flex-shrink: 0; }
 #area-left .tile .rank, #area-right .tile .rank { font-size: 9px; }
 #area-left .tile .suit, #area-right .tile .suit { font-size: 5px; }
 
@@ -317,6 +358,13 @@ html, body {
 /* 碰/杠/吃 公开牌区 */
 #bl .tile, #br .tile { width: 20px; height: 28px; font-size: 7px; }
 #bl .tile .rank, #br .tile .rank { font-size: 9px; }
+
+/* 超小屏进一步优化 */
+@media (max-height: 400px) {
+  #area-bottom .tile { width: 28px !important; height: 40px !important; }
+  #area-top .tile { width: 18px !important; height: 26px !important; }
+  #area-left .tile, #area-right .tile { width: 16px !important; height: 24px !important; }
+}
 </style>
 </head>
 <body>
@@ -418,8 +466,8 @@ html, body {
       <span>你</span>
       <span id="score-bottom" style="color:#ffd700">0</span>分
     </div>
-    <!-- 手牌行 -->
-    <div id="my-hand-area"></div>
+    <!-- 手牌行（可滚动） -->
+    <div id="my-hand-area" class="tiles-row"></div>
     <!-- 操作按钮 -->
     <div id="action-panel"></div>
   </div>
