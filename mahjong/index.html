@@ -2,8 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>麻将游戏</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="screen-orientation" content="landscape">
+    <title>麻将游戏 - 横屏版</title>
     <style>
         * {
             margin: 0;
@@ -15,60 +16,290 @@
             font-family: 'Microsoft YaHei', Arial, sans-serif;
             background: linear-gradient(135deg, #1a5f3f 0%, #0d3d26 100%);
             min-height: 100vh;
+            min-width: 100vw;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-            overflow-x: hidden;
+            justify-content: center;
+            padding: 10px;
+            overflow: hidden;
+            /* 强制横屏提示 */
+            touch-action: none;
+        }
+
+        /* 横屏提示 */
+        .rotate-hint {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a5f3f 0%, #0d3d26 100%);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffd700;
+            text-align: center;
+        }
+
+        .rotate-hint svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            animation: rotate-icon 2s infinite;
+        }
+
+        @keyframes rotate-icon {
+            0%, 100% { transform: rotate(-90deg); }
+            50% { transform: rotate(90deg); }
+        }
+
+        /* 竖屏时显示提示 */
+        @media (orientation: portrait) {
+            .rotate-hint {
+                display: flex;
+            }
+            .game-container {
+                display: none;
+            }
+            h1 {
+                display: none;
+            }
         }
 
         h1 {
             color: #ffd700;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            margin-bottom: 20px;
-            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-size: 2em;
+            white-space: nowrap;
         }
 
         .game-container {
             background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 15px;
+            padding: 15px 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            max-width: 1200px;
-            width: 100%;
+            width: 95vw;
+            max-width: 98vw;
+            overflow: hidden;
         }
 
         .game-info {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 15px;
             color: white;
-            font-size: 1.1em;
+            font-size: 1em;
+            flex-wrap: wrap;
         }
 
         .player-area {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            margin: 15px 0;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
+            gap: 15px;
+            margin: 8px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
         }
 
         .player-name {
             color: #ffd700;
             font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 1.2em;
+            margin-bottom: 0;
+            font-size: 1em;
+            white-space: nowrap;
+            min-width: 80px;
+        }
+
+        .tiles-container-wrapper {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
         }
 
         .tiles-container {
             display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
+            gap: 4px;
+            justify-content: flex-start;
+            height: 70px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            padding: 5px;
+            position: relative;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            overscroll-behavior-x: none;
+        }
+
+        .tiles-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tiles-container .tile {
+            flex-shrink: 0;
+            width: 42px;
+            height: 60px;
+            font-size: 1.1em;
+            transition: filter 0.1s, transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 滚动时的运动模糊效果 */
+        .tiles-container.scrolling .tile {
+            filter: blur(1px);
+        }
+
+        .tiles-container.fast-scrolling .tile {
+            filter: blur(2px);
+        }
+
+        /* 中心缩放效果 */
+        .tile.center-highlight {
+            transform: scale(1.15);
+            z-index: 10;
+        }
+
+        /* 滚动快捷按钮 */
+        .scroll-nav {
+            display: flex;
+            align-items: center;
             justify-content: center;
-            min-height: 100px;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        /* 滚动速度显示（调试） */
+        .scroll-speed-debug {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #0f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9999;
+            display: none;
+        }
+
+        .scroll-speed-debug.visible {
+            display: block;
+        }
+
+        .scroll-nav-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 215, 0, 0.3);
+            color: #ffd700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .scroll-nav-btn:hover {
+            background: rgba(255, 215, 0, 0.5);
+            transform: scale(1.1);
+        }
+
+        .scroll-nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        .scroll-nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 滚动指示器 */
+        .scroll-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+            min-height: 8px;
+        }
+
+        .scroll-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .scroll-dot:hover {
+            background: rgba(255, 215, 0, 0.5);
+            transform: scale(1.2);
+        }
+
+        .scroll-dot.active {
+            background: #ffd700;
+            width: 18px;
+            border-radius: 3px;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+
+        /* 进度条指示器（备用样式） */
+        .scroll-progress {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .scroll-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            border-radius: 2px;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        /* 边界弹性视觉反馈 */
+        .tiles-container.elastic-left::before,
+        .tiles-container.elastic-right::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .tiles-container.elastic-left::before {
+            left: 0;
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.3), transparent);
+        }
+
+        .tiles-container.elastic-right::after {
+            right: 0;
+            background: linear-gradient(270deg, rgba(255, 215, 0, 0.3), transparent);
+        }
+
+        .tiles-container.elastic-left.show-hint::before,
+        .tiles-container.elastic-right.show-hint::after {
+            opacity: 1;
         }
 
         .tile {
@@ -266,38 +497,85 @@
             font-style: italic;
         }
 
-        @media (max-width: 768px) {
+        /* 小屏横屏优化 */
+        @media (max-height: 500px) {
             .tile {
-                width: 40px;
-                height: 56px;
+                width: 38px;
+                height: 54px;
                 font-size: 1em;
             }
 
             .tile-number {
-                font-size: 1.1em;
+                font-size: 1em;
             }
 
             .tile-suit {
-                font-size: 0.7em;
+                font-size: 0.65em;
             }
 
             .discarded-tiles .tile {
-                width: 32px;
-                height: 45px;
-                font-size: 0.8em;
+                width: 30px;
+                height: 42px;
+                font-size: 0.75em;
             }
 
             h1 {
-                font-size: 1.8em;
+                font-size: 1.5em;
+                margin-bottom: 10px;
             }
 
             .game-container {
-                padding: 15px;
+                padding: 10px 15px;
             }
 
             .btn {
-                padding: 10px 20px;
-                font-size: 1em;
+                padding: 8px 16px;
+                font-size: 0.9em;
+            }
+
+            .tiles-container {
+                padding: 5px;
+                gap: 4px;
+                height: 65px;
+            }
+
+            .meld .tile {
+                width: 30px;
+                height: 42px;
+                font-size: 0.75em;
+            }
+
+            .scroll-dot {
+                width: 5px;
+                height: 5px;
+            }
+
+            .scroll-dot.active {
+                width: 14px;
+            }
+
+            .scroll-nav-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+
+            /* 增加移动端滚动区域的可点击范围 */
+            .tiles-container-wrapper {
+                padding: 8px 0;
+            }
+
+            .tiles-container {
+                padding: 12px 8px;
+            }
+
+            /* 移动端提示文字 */
+            .mobile-hint {
+                display: block;
+                text-align: center;
+                color: rgba(255, 255, 255, 0.5);
+                font-size: 0.85em;
+                margin-top: 4px;
             }
         }
 
@@ -324,13 +602,26 @@
             <div>剩余牌: <span id="remaining">0</span></div>
         </div>
 
+        <!-- 滚动速度调试显示 -->
+        <div class="scroll-speed-debug" id="speed-debug">
+            速度: <span id="speed-value">0</span> px/f
+        </div>
+
         <div class="message" id="message">点击"开始游戏"开始</div>
 
         <!-- AI 玩家 2 (上方) -->
         <div class="player-area" id="player2-area">
             <div class="player-name">电脑 2</div>
             <div class="meld-area" id="player2-melds"></div>
-            <div class="tiles-container" id="player2-hand"></div>
+            <div class="tiles-container-wrapper">
+                <div class="tiles-container elastic-left elastic-right" id="player2-hand"></div>
+                <div class="scroll-nav">
+                    <button class="scroll-nav-btn" onclick="scrollToEdge('player2-hand', 'left')" title="滚动到最左">◀</button>
+                    <div class="scroll-indicator" id="player2-indicator"></div>
+                    <button class="scroll-nav-btn" onclick="scrollToEdge('player2-hand', 'right')" title="滚动到最右">▶</button>
+                </div>
+                <div class="mobile-hint">双击牌可快速定位</div>
+            </div>
         </div>
 
         <!-- 中间区域 -->
@@ -339,7 +630,15 @@
             <div class="player-area" id="player1-area" style="min-width: 250px;">
                 <div class="player-name">电脑 1</div>
                 <div class="meld-area" id="player1-melds"></div>
-                <div class="tiles-container" id="player1-hand"></div>
+                <div class="tiles-container-wrapper">
+                    <div class="tiles-container elastic-left elastic-right" id="player1-hand"></div>
+                    <div class="scroll-nav">
+                        <button class="scroll-nav-btn" onclick="scrollToEdge('player1-hand', 'left')" title="滚动到最左">◀</button>
+                        <div class="scroll-indicator" id="player1-indicator"></div>
+                        <button class="scroll-nav-btn" onclick="scrollToEdge('player1-hand', 'right')" title="滚动到最右">▶</button>
+                    </div>
+                    <div class="mobile-hint">双击牌可快速定位</div>
+                </div>
             </div>
 
             <!-- 弃牌区 -->
@@ -352,7 +651,15 @@
             <div class="player-area" id="player3-area" style="min-width: 250px;">
                 <div class="player-name">电脑 3</div>
                 <div class="meld-area" id="player3-melds"></div>
-                <div class="tiles-container" id="player3-hand"></div>
+                <div class="tiles-container-wrapper">
+                    <div class="tiles-container elastic-left elastic-right" id="player3-hand"></div>
+                    <div class="scroll-nav">
+                        <button class="scroll-nav-btn" onclick="scrollToEdge('player3-hand', 'left')" title="滚动到最左">◀</button>
+                        <div class="scroll-indicator" id="player3-indicator"></div>
+                        <button class="scroll-nav-btn" onclick="scrollToEdge('player3-hand', 'right')" title="滚动到最右">▶</button>
+                    </div>
+                    <div class="mobile-hint">双击牌可快速定位</div>
+                </div>
             </div>
         </div>
 
@@ -360,7 +667,15 @@
         <div class="player-area" id="player0-area">
             <div class="player-name">你</div>
             <div class="meld-area" id="player0-melds"></div>
-            <div class="tiles-container" id="player0-hand"></div>
+            <div class="tiles-container-wrapper">
+                <div class="tiles-container elastic-left elastic-right" id="player0-hand"></div>
+                <div class="scroll-nav">
+                    <button class="scroll-nav-btn" onclick="scrollToEdge('player0-hand', 'left')" title="滚动到最左">◀</button>
+                    <div class="scroll-indicator" id="player0-indicator"></div>
+                    <button class="scroll-nav-btn" onclick="scrollToEdge('player0-hand', 'right')" title="滚动到最右">▶</button>
+                </div>
+                <div class="mobile-hint">双击牌可快速定位</div>
+            </div>
         </div>
 
         <div class="controls">
@@ -465,7 +780,7 @@
                 `<div class="tile-content"><div class="tile-number">${tile.name}</div></div>` :
                 `<div class="tile-content"><div class="tile-number">${tile.number}</div><div class="tile-suit">${suits[tile.suit].name}</div></div>`;
 
-            return `<div class="tile ${tile.class} ${selectedClass}" data-id="${tile.id}" onclick="selectTile(${tile.id})">${content}</div>`;
+            return `<div class="tile ${tile.class} ${selectedClass}" data-id="${tile.id}" onclick="selectTile(${tile.id})" ondblclick="doubleClickTile(${tile.id})">${content}</div>`;
         }
 
         // 排序手牌
@@ -527,6 +842,13 @@
             // 更新游戏信息
             document.getElementById('round').textContent = gameState.round;
             document.getElementById('remaining').textContent = gameState.deck.length;
+
+            // 更新滚动指示器
+            setTimeout(() => {
+                Object.values(scrollControllers).forEach(controller => {
+                    controller.updateIndicator();
+                });
+            }, 50);
         }
 
         // 选择牌
@@ -539,7 +861,41 @@
             if (tile) {
                 gameState.selectedTile = gameState.selectedTile === tileId ? null : tileId;
                 render();
+
+                // 滚动到选中的牌
+                if (gameState.selectedTile === tileId) {
+                    setTimeout(() => {
+                        const tileElement = document.querySelector(`[data-id="${tileId}"]`);
+                        if (tileElement) {
+                            tileElement.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'nearest',
+                                inline: 'center'
+                            });
+                        }
+                    }, 10);
+                }
             }
+        }
+
+        // 双击牌面快速滚动到该牌（居中显示）
+        function doubleClickTile(tileId) {
+            const tileElement = document.querySelector(`[data-id="${tileId}"]`);
+            if (!tileElement) return;
+
+            // 平滑滚动到牌面并居中
+            tileElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            });
+
+            // 添加高亮动画效果
+            tileElement.style.transition = 'transform 0.3s';
+            tileElement.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                tileElement.style.transform = '';
+            }, 300);
         }
 
         // 摸牌
@@ -845,6 +1201,468 @@
 
         // 初始化
         render();
+
+        // ==================== 惯性滚动系统 ====================
+        let showSpeedDebug = false; // 调试开关
+
+        class MomentumScroller {
+            constructor(element, indicatorId) {
+                this.element = element;
+                this.indicatorId = indicatorId;
+                this.isTracking = false;
+                this.lastX = 0;
+                this.lastTime = 0;
+                this.velocity = 0;
+                this.animationId = null;
+                this.totalPages = 1;
+                this.currentPage = 0;
+                this.startX = 0; // 用于检测快速滑动
+                this.startScrollLeft = 0; // 用于手指跟随
+                this.velocityHistory = []; // 速度历史记录
+                this.scrollBlurTimeout = null; // 模糊效果定时器
+                this.centerHighlightTimeout = null; // 中心高亮定时器
+
+                this.init();
+            }
+
+            init() {
+                // 触摸事件
+                this.element.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: true });
+                this.element.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: true });
+                this.element.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: true });
+
+                // 鼠标事件
+                this.element.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                this.element.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                this.element.addEventListener('mouseup', (e) => this.onMouseUp(e));
+                this.element.addEventListener('mouseleave', (e) => this.onMouseUp(e));
+
+                // 滚动事件
+                this.element.addEventListener('scroll', () => this.onScroll(), { passive: true });
+
+                // 初始化指示器
+                this.updateIndicator();
+            }
+
+            onTouchStart(e) {
+                this.startTracking(e.touches[0].clientX);
+            }
+
+            onTouchMove(e) {
+                if (!this.isTracking) return;
+                this.trackMovement(e.touches[0].clientX);
+            }
+
+            onTouchEnd(e) {
+                this.stopTracking();
+            }
+
+            onMouseDown(e) {
+                this.startTracking(e.clientX);
+                e.preventDefault();
+            }
+
+            onMouseMove(e) {
+                if (!this.isTracking) return;
+                this.trackMovement(e.clientX);
+            }
+
+            onMouseUp(e) {
+                this.stopTracking();
+            }
+
+            startTracking(x) {
+                this.isTracking = true;
+                this.lastX = x;
+                this.startX = x;
+                this.lastTime = performance.now();
+                this.velocity = 0;
+                this.velocityHistory = [];
+                this.startScrollLeft = this.element.scrollLeft;
+                this.cancelAnimation();
+                this.removeBlur();
+                this.clearCenterHighlight();
+            }
+
+            trackMovement(x) {
+                const now = performance.now();
+                const dx = x - this.lastX;
+                const totalDx = x - this.startX;
+                const dt = now - this.lastTime;
+
+                if (dt > 0) {
+                    // 计算瞬时速度
+                    const instantVelocity = dx / dt;
+
+                    // 保存速度历史
+                    this.velocityHistory.push({
+                        velocity: instantVelocity,
+                        time: now
+                    });
+
+                    // 只保留最近100ms的速度数据
+                    this.velocityHistory = this.velocityHistory.filter(v => now - v.time < 100);
+
+                    // 使用指数加权平均
+                    this.velocity = this.velocity * 0.5 + instantVelocity * 0.5;
+                }
+
+                // 手指跟随：实时调整滚动位置
+                this.element.scrollLeft = this.startScrollLeft - totalDx;
+
+                this.lastX = x;
+                this.lastTime = now;
+
+                // 应用轻微模糊效果
+                this.applyBlur(Math.abs(this.velocity));
+
+                // 检查边界弹性
+                this.checkElasticBounds();
+
+                // 更新速度显示（调试模式）
+                this.updateSpeedDisplay();
+            }
+
+            stopTracking() {
+                if (!this.isTracking) return;
+                this.isTracking = false;
+
+                // 检测快速滑动（fling）
+                const now = performance.now();
+                const recentVelocities = this.velocityHistory.filter(v => now - v.time < 50);
+                let finalVelocity = this.velocity;
+
+                if (recentVelocities.length > 0) {
+                    // 计算最近50ms的平均速度
+                    const avgVelocity = recentVelocities.reduce((sum, v) => sum + v.velocity, 0) / recentVelocities.length;
+
+                    // 如果平均速度很高，使用更激进的初速度
+                    if (Math.abs(avgVelocity) > Math.abs(this.velocity) * 1.2) {
+                        finalVelocity = avgVelocity * 1.3; // 增强fling效果
+                    }
+                }
+
+                // 检测快速滑动手势（总距离短但速度快）
+                const totalDistance = Math.abs(this.lastX - this.startX);
+                const totalTime = now - (this.velocityHistory[0]?.time || now);
+                const avgSpeed = totalTime > 0 ? totalDistance / totalTime : 0;
+
+                if (avgSpeed > 0.8 && Math.abs(finalVelocity) < 0.5) {
+                    // 快速滑动但末速度不高，说明是快速甩动
+                    finalVelocity = (this.lastX < this.startX ? 1.5 : -1.5);
+                }
+
+                this.velocity = finalVelocity;
+
+                // 应用惯性滚动
+                if (Math.abs(this.velocity) > 0.1) {
+                    this.applyMomentum();
+                } else {
+                    this.checkElasticBounds();
+                    this.scheduleRemoveBlur();
+                    this.scheduleCenterHighlight();
+                }
+            }
+
+            applyMomentum() {
+                const friction = 0.96; // 摩擦系数
+                const minVelocity = 0.01; // 最小速度阈值
+
+                const animate = () => {
+                    // 更新速度显示
+                    this.updateSpeedDisplay();
+
+                    if (Math.abs(this.velocity) < minVelocity) {
+                        this.cancelAnimation();
+                        this.checkElasticBounds();
+                        this.scheduleRemoveBlur();
+                        this.scheduleCenterHighlight();
+                        return;
+                    }
+
+                    // 应用速度到滚动位置
+                    const delta = this.velocity * 16; // 约60fps
+                    this.element.scrollLeft -= delta;
+
+                    // 应用摩擦力
+                    this.velocity *= friction;
+
+                    // 根据速度应用模糊效果
+                    this.applyBlur(Math.abs(this.velocity));
+
+                    // 检查边界
+                    const atLeftEdge = this.element.scrollLeft <= 0;
+                    const atRightEdge = this.element.scrollLeft >= this.element.scrollWidth - this.element.clientWidth;
+
+                    if (atLeftEdge || atRightEdge) {
+                        // 边界弹性回弹
+                        this.velocity *= -0.3; // 反弹系数
+                        if (Math.abs(this.velocity) < 0.5) {
+                            this.cancelAnimation();
+                            this.snapToEdge();
+                            this.scheduleRemoveBlur();
+                            this.scheduleCenterHighlight();
+                            return;
+                        }
+                    }
+
+                    this.animationId = requestAnimationFrame(animate);
+                };
+
+                this.cancelAnimation();
+                this.animationId = requestAnimationFrame(animate);
+            }
+
+            applyBlur(velocity) {
+                // 根据速度应用不同程度的模糊
+                if (velocity > 0.8) {
+                    this.element.classList.add('fast-scrolling');
+                    this.element.classList.remove('scrolling');
+                } else if (velocity > 0.3) {
+                    this.element.classList.add('scrolling');
+                    this.element.classList.remove('fast-scrolling');
+                } else {
+                    this.element.classList.remove('scrolling', 'fast-scrolling');
+                }
+            }
+
+            removeBlur() {
+                this.element.classList.remove('scrolling', 'fast-scrolling');
+                if (this.scrollBlurTimeout) {
+                    clearTimeout(this.scrollBlurTimeout);
+                    this.scrollBlurTimeout = null;
+                }
+            }
+
+            scheduleRemoveBlur() {
+                // 延迟移除模糊效果
+                if (this.scrollBlurTimeout) {
+                    clearTimeout(this.scrollBlurTimeout);
+                }
+                this.scrollBlurTimeout = setTimeout(() => {
+                    this.removeBlur();
+                }, 150);
+            }
+
+            updateSpeedDisplay() {
+                // 仅在调试模式下更新速度显示
+                if (!showSpeedDebug) return;
+
+                const speedValue = document.getElementById('speed-value');
+                if (speedValue) {
+                    // 将速度转换为更直观的值（像素/帧）
+                    const displaySpeed = Math.abs(this.velocity * 16).toFixed(2);
+                    speedValue.textContent = displaySpeed;
+                }
+            }
+
+            scheduleCenterHighlight() {
+                // 延迟应用中心高亮效果
+                if (this.centerHighlightTimeout) {
+                    clearTimeout(this.centerHighlightTimeout);
+                }
+                this.centerHighlightTimeout = setTimeout(() => {
+                    this.applyCenterHighlight();
+                }, 100);
+            }
+
+            applyCenterHighlight() {
+                // 清除之前的高亮
+                this.clearCenterHighlight();
+
+                const container = this.element;
+                const containerRect = container.getBoundingClientRect();
+                const containerCenter = containerRect.left + containerRect.width / 2;
+
+                const tiles = container.querySelectorAll('.tile');
+                let closestTile = null;
+                let closestDistance = Infinity;
+
+                tiles.forEach(tile => {
+                    const tileRect = tile.getBoundingClientRect();
+                    const tileCenter = tileRect.left + tileRect.width / 2;
+                    const distance = Math.abs(tileCenter - containerCenter);
+
+                    if (distance < closestDistance && distance < tileRect.width * 0.6) {
+                        closestDistance = distance;
+                        closestTile = tile;
+                    }
+                });
+
+                if (closestTile) {
+                    closestTile.classList.add('center-highlight');
+                }
+            }
+
+            clearCenterHighlight() {
+                const tiles = this.element.querySelectorAll('.tile.center-highlight');
+                tiles.forEach(tile => tile.classList.remove('center-highlight'));
+            }
+
+            cancelAnimation() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+            }
+
+            checkElasticBounds() {
+                const atLeftEdge = this.element.scrollLeft <= 0;
+                const atRightEdge = this.element.scrollLeft >= this.element.scrollWidth - this.element.clientWidth - 1;
+
+                this.element.classList.toggle('show-hint', atLeftEdge || atRightEdge);
+            }
+
+            snapToEdge() {
+                const maxScroll = this.element.scrollWidth - this.element.clientWidth;
+                if (this.element.scrollLeft < 0) {
+                    this.smoothScrollTo(0);
+                } else if (this.element.scrollLeft > maxScroll) {
+                    this.smoothScrollTo(maxScroll);
+                }
+            }
+
+            scrollToEdge(direction) {
+                const maxScroll = this.element.scrollWidth - this.element.clientWidth;
+                if (direction === 'left') {
+                    this.smoothScrollTo(0);
+                } else {
+                    this.smoothScrollTo(maxScroll);
+                }
+            }
+
+            smoothScrollTo(target) {
+                const start = this.element.scrollLeft;
+                const distance = target - start;
+                const duration = 400;
+                const startTime = performance.now();
+
+                const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+                const animate = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const easedProgress = easeOutCubic(progress);
+
+                    this.element.scrollLeft = start + distance * easedProgress;
+
+                    if (progress < 1) {
+                        this.animationId = requestAnimationFrame(animate);
+                    } else {
+                        this.scheduleRemoveBlur();
+                        this.scheduleCenterHighlight();
+                    }
+                };
+
+                this.cancelAnimation();
+                this.removeBlur();
+                this.clearCenterHighlight();
+                this.animationId = requestAnimationFrame(animate);
+            }
+
+            onScroll() {
+                this.updateIndicator();
+                this.checkElasticBounds();
+
+                // 滚动时清除中心高亮
+                this.clearCenterHighlight();
+
+                // 更新速度显示
+                this.updateSpeedDisplay();
+            }
+
+            updateIndicator() {
+                const indicator = document.getElementById(this.indicatorId);
+                if (!indicator) return;
+
+                const scrollWidth = this.element.scrollWidth;
+                const clientWidth = this.element.clientWidth;
+                const maxScroll = scrollWidth - clientWidth;
+
+                // 如果不需要滚动，隐藏指示器
+                if (maxScroll <= 10) {
+                    indicator.innerHTML = '';
+                    return;
+                }
+
+                // 计算页数（每页约3-4张牌）
+                const tiles = this.element.querySelectorAll('.tile');
+                const tilesPerPage = Math.floor(clientWidth / 55); // 55 = 牌宽 + gap
+                this.totalPages = Math.max(1, Math.ceil(tiles.length / tilesPerPage));
+
+                // 计算当前页
+                const scrollProgress = this.element.scrollLeft / maxScroll;
+                this.currentPage = Math.round(scrollProgress * (this.totalPages - 1));
+
+                // 生成指示器点
+                let html = '';
+                for (let i = 0; i < this.totalPages; i++) {
+                    html += `<div class="scroll-dot ${i === this.currentPage ? 'active' : ''}"
+                                  data-page="${i}"
+                                  onclick="scrollToPage('${this.element.id}', ${i})"></div>`;
+                }
+                indicator.innerHTML = html;
+            }
+
+            scrollToPage(pageIndex) {
+                const tiles = this.element.querySelectorAll('.tile');
+                const tilesPerPage = Math.floor(this.element.clientWidth / 55);
+                const targetTileIndex = pageIndex * tilesPerPage;
+
+                if (tiles[targetTileIndex]) {
+                    tiles[targetTileIndex].scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'start'
+                    });
+                }
+            }
+        }
+
+        // 全局滚动控制器实例
+        const scrollControllers = {};
+
+        // 初始化滚动控制器
+        function initScrollControllers() {
+            for (let i = 0; i < 4; i++) {
+                const element = document.getElementById(`player${i}-hand`);
+                const indicatorId = `player${i}-indicator`;
+                if (element) {
+                    scrollControllers[i] = new MomentumScroller(element, indicatorId);
+                }
+            }
+        }
+
+        // 滚动到指定页
+        function scrollToPage(elementId, pageIndex) {
+            const index = parseInt(elementId.replace('player', '').replace('-hand', ''));
+            if (scrollControllers[index]) {
+                scrollControllers[index].scrollToPage(pageIndex);
+            }
+        }
+
+        // 滚动到边缘
+        function scrollToEdge(elementId, direction) {
+            const index = parseInt(elementId.replace('player', '').replace('-hand', ''));
+            if (scrollControllers[index]) {
+                scrollControllers[index].scrollToEdge(direction);
+            }
+        }
+
+        // 页面加载后初始化
+        setTimeout(() => {
+            initScrollControllers();
+        }, 100);
+
+        // 调试功能：在控制台输入 toggleSpeedDebug() 来显示/隐藏速度调试面板
+        window.toggleSpeedDebug = function() {
+            showSpeedDebug = !showSpeedDebug;
+            const debugPanel = document.getElementById('speed-debug');
+            if (debugPanel) {
+                debugPanel.classList.toggle('visible', showSpeedDebug);
+            }
+            console.log('速度调试面板:', showSpeedDebug ? '已显示' : '已隐藏');
+        };
     </script>
 </body>
 </html>
