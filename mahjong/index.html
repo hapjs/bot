@@ -343,19 +343,24 @@ function drawInfo(width, height) {
   ctx.fillText(`当前：${['你', '电脑 1', '电脑 2', '电脑 3'][state.currentPlayer]}`, 20, 70);
 }
 
-// 触摸事件
+// 触摸事件 - 修复坐标计算
 canvas.addEventListener('click', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const x = (e.clientX - rect.left) * dpr;
-  const y = (e.clientY - rect.top) * dpr;
+  e.preventDefault();
   
-  const width = canvas.width / dpr;
-  const height = canvas.height / dpr;
+  const rect = canvas.getBoundingClientRect();
+  // 使用 CSS 像素（不乘 dpr）
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  const width = rect.width;
+  const height = rect.height;
+  
+  console.log('点击坐标:', x, y);
   
   // 检查按钮点击
   checkButtonClick(x, y, width, height);
   
-  // 检查手牌点击
+  // 检查手牌点击（只有自己的回合）
   if (state.currentPlayer === 0) {
     const startX = width * 0.15;
     const handY = height * 0.82;
@@ -367,24 +372,59 @@ canvas.addEventListener('click', (e) => {
           y >= handY && y <= handY + TILE_CONFIG.height) {
         state.selectedTile = i;
         render();
-        break;
+        return;
+      }
+    }
+    
+    // 检查是否点击当前摸的牌
+    if (state.currentDraw) {
+      const drawX = width / 2 - TILE_CONFIG.width / 2;
+      const drawY = height * 0.75;
+      if (x >= drawX && x <= drawX + TILE_CONFIG.width &&
+          y >= drawY && y <= drawY + TILE_CONFIG.height) {
+        // 直接打出摸到的牌
+        state.discards.push(state.currentDraw);
+        state.currentDraw = null;
+        render();
+        nextPlayer();
+        return;
       }
     }
   }
 });
 
-// 检查按钮点击
+// 也支持触摸开始事件（移动端）
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (e.touches.length > 0) {
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const clickEvent = new MouseEvent('click', {
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    });
+    canvas.dispatchEvent(clickEvent);
+  }
+}, { passive: false });
+
+// 检查按钮点击 - 扩大点击区域
 function checkButtonClick(x, y, width, height) {
   const buttons = [
-    { action: 'draw', x: width / 2 - 120, y: height * 0.92 },
-    { action: 'play', x: width / 2 - 40, y: height * 0.92 },
-    { action: 'win', x: width / 2 + 40, y: height * 0.92 },
-    { action: 'new', x: width / 2 + 120, y: height * 0.92 }
+    { action: 'draw', x: width / 2 - 120, y: height * 0.92, w: 80, h: 30 },
+    { action: 'play', x: width / 2 - 40, y: height * 0.92, w: 80, h: 30 },
+    { action: 'win', x: width / 2 + 40, y: height * 0.92, w: 80, h: 30 },
+    { action: 'new', x: width / 2 + 120, y: height * 0.92, w: 80, h: 30 }
   ];
   
   buttons.forEach(btn => {
-    if (x >= btn.x - 40 && x <= btn.x + 40 &&
-        y >= btn.y - 15 && y <= btn.y + 15) {
+    // 扩大点击区域（左右各 +10px）
+    const hitX = btn.x - btn.w / 2 - 10;
+    const hitY = btn.y - btn.h / 2 - 5;
+    const hitW = btn.w + 20;
+    const hitH = btn.h + 10;
+    
+    if (x >= hitX && x <= hitX + hitW &&
+        y >= hitY && y <= hitY + hitH) {
       handleAction(btn.action);
     }
   });
