@@ -129,13 +129,14 @@
 
         /* 下方玩家（自己） */
         .player-bottom {
-            bottom: 2vh;
+            bottom: 8vh;
             left: 50%;
             transform: translateX(-50%);
         }
 
         .player-bottom .player-hand {
             flex-direction: row;
+            max-width: 60vw;
         }
 
         /* 上方玩家（对家） */
@@ -210,12 +211,15 @@
         /* 控制按钮 */
         .controls {
             position: absolute;
-            bottom: 18vh;
+            bottom: 2vh;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 10px;
             z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 15px;
+            border-radius: 10px;
         }
 
         .btn {
@@ -269,7 +273,7 @@
         /* 当前摸牌指示 */
         .current-draw {
             position: absolute;
-            bottom: 15vh;
+            bottom: 8vh;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -377,16 +381,16 @@
         <!-- 中央弃牌区 -->
         <div class="discard-zone" id="discardZone"></div>
 
-        <!-- 当前摸的牌 -->
-        <div class="current-draw" id="currentDraw" style="display: none;">
-            <div class="tile" id="currentDrawTile"></div>
-            <div class="draw-label">摸到的牌</div>
-        </div>
-
         <!-- 下方玩家（自己） -->
         <div class="player player-bottom" id="player0">
             <div class="player-name">🎯 你</div>
             <div class="player-hand" id="hand0"></div>
+        </div>
+
+        <!-- 当前摸的牌 -->
+        <div class="current-draw" id="currentDraw" style="display: none;">
+            <div class="tile" id="currentDrawTile"></div>
+            <div class="draw-label">摸到的牌</div>
         </div>
 
         <!-- 控制按钮 -->
