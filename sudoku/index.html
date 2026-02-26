@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>数独游戏 - Sudoku</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin: 15px 0;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .info-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .info-value.errors {
+            color: #e74c3c;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-hint {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-check {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .difficulty-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid white;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .difficulty-btn.active {
+            background: white;
+            color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .sudoku-board {
+            background: white;
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 0;
+            background: #333;
+            border: 3px solid #333;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #ddd;
+            font-size: clamp(18px, 4vw, 28px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        /* 3x3 宫格加粗边框 */
+        .cell:nth-child(3n) {
+            border-right: 2px solid #333;
+        }
+
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid #333;
+        }
+
+        .cell.initial {
+            background: #f0f0f0;
+            color: #333;
+            cursor: not-allowed;
+            font-weight: 700;
+        }
+
+        .cell.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .cell.highlighted {
+            background: #e8eaf6;
+        }
+
+        .cell.same-number {
+            background: #c5cae9;
+        }
+
+        .cell.error {
+            background: #ffebee;
+            color: #e74c3c;
+            animation: shake 0.3s;
+        }
+
+        .cell:not(.initial):hover {
+            background: #f5f5f5;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .number-pad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .number-btn {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.5em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .number-btn:active {
+            transform: scale(0.9);
+        }
+
+        .number-btn.clear {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            grid-column: span 2;
+        }
+
+        /* 完成动画 */
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            text-align: center;
+            z-index: 1000;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .celebration h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .celebration p {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+                margin: 10px 0;
+            }
+
+            .game-info {
+                padding: 10px;
+            }
+
+            .info-value {
+                font-size: 1.2em;
+            }
+
+            button {
+                padding: 10px 15px;
+                font-size: 0.9em;
+                min-width: 80px;
+            }
+
+            .sudoku-board {
+                padding: 5px;
+            }
+
+            .number-pad {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .celebration {
+                padding: 30px 20px;
+            }
+
+            .celebration h2 {
+                font-size: 1.5em;
+            }
+
+            .celebration p {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 数独游戏</h1>
+
+        <div class="game-info">
+            <div class="info-item">
+                <div class="info-label">难度</div>
+                <div class="info-value" id="difficultyDisplay">简单</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">时间</div>
+                <div class="info-value" id="timer">00:00</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">错误</div>
+                <div class="info-value errors" id="errors">0</div>
+            </div>
+        </div>
+
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" data-difficulty="easy">简单</button>
+            <button class="difficulty-btn" data-difficulty="medium">中等</button>
+            <button class="difficulty-btn" data-difficulty="hard">困难</button>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" id="newGameBtn">新游戏</button>
+            <button class="btn-hint" id="hintBtn">提示</button>
+            <button class="btn-check" id="checkBtn">检查</button>
+        </div>
+
+        <div class="sudoku-board">
+            <div class="sudoku-grid" id="sudokuGrid"></div>
+        </div>
+
+        <div class="number-pad">
+            <button class="number-btn" data-number="1">1</button>
+            <button class="number-btn" data-number="2">2</button>
+            <button class="number-btn" data-number="3">3</button>
+            <button class="number-btn" data-number="4">4</button>
+            <button class="number-btn" data-number="5">5</button>
+            <button class="number-btn" data-number="6">6</button>
+            <button class="number-btn" data-number="7">7</button>
+            <button class="number-btn" data-number="8">8</button>
+            <button class="number-btn" data-number="9">9</button>
+            <button class="number-btn clear" data-number="0">清除</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 数独游戏核心逻辑 ====================
+
+        class SudokuGame {
+            constructor() {
+                this.board = Array(9).fill(null).map(() => Array(9).fill(0));
+                this.solution = Array(9).fill(null).map(() => Array(9).fill(0));
+                this.initialBoard = Array(9).fill(null).map(() => Array(9).fill(0));
+                this.selectedCell = null;
+                this.difficulty = 'easy';
+                this.errors = 0;
+                this.startTime = null;
+                this.timerInterval = null;
+
+                this.difficultySettings = {
+                    easy: { cellsToRemove: 35 },
+                    medium: { cellsToRemove: 45 },
+                    hard: { cellsToRemove: 55 }
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.createGrid();
+                this.bindEvents();
+                this.newGame();
+            }
+
+            // 创建数独网格 DOM
+            createGrid() {
+                const grid = document.getElementById('sudokuGrid');
+                grid.innerHTML = '';
+
+                for (let i = 0; i < 81; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.index = i;
+                    grid.appendChild(cell);
+                }
+            }
+
+            // 绑定事件
+            bindEvents() {
+                // 格子点击事件
+                document.getElementById('sudokuGrid').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('cell')) {
+                        this.selectCell(parseInt(e.target.dataset.index));
+                    }
+                });
+
+                // 数字键盘
+                document.querySelectorAll('.number-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const number = parseInt(btn.dataset.number);
+                        this.inputNumber(number);
+                    });
+                });
+
+                // 键盘输入
+                document.addEventListener('keydown', (e) => {
+                    if (e.key >= '1' && e.key <= '9') {
+                        this.inputNumber(parseInt(e.key));
+                    } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
+                        this.inputNumber(0);
+                    }
+                });
+
+                // 难度选择
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.difficulty = btn.dataset.difficulty;
+                        document.getElementById('difficultyDisplay').textContent = btn.textContent;
+                        this.newGame();
+                    });
+                });
+
+                // 按钮事件
+                document.getElementById('newGameBtn').addEventListener('click', () => this.newGame());
+                document.getElementById('hintBtn').addEventListener('click', () => this.showHint());
+                document.getElementById('checkBtn').addEventListener('click', () => this.checkSolution());
+            }
+
+            // 新游戏
+            newGame() {
+                this.errors = 0;
+                this.selectedCell = null;
+                this.updateErrors();
+                this.stopTimer();
+                this.startTimer();
+
+                // 生成完整的数独
+                this.generateSudoku();
+
+                // 根据难度移除数字
+                this.removeNumbers();
+
+                // 渲染棋盘
+                this.render();
+            }
+
+            // 生成完整的数独（回溯算法）
+            generateSudoku() {
+                // 初始化空白棋盘
+                this.board = Array(9).fill(null).map(() => Array(9).fill(0));
+
+                // 填充对角线的 3x3 宫格（它们相互独立）
+                for (let i = 0; i < 9; i += 3) {
+                    this.fillBox(i, i);
+                }
+
+                // 填充剩余的格子
+                this.solveSudoku(this.board);
+
+                // 保存解决方案
+                this.solution = this.board.map(row => [...row]);
+            }
+
+            // 填充 3x3 宫格
+            fillBox(row, col) {
+                const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+                this.shuffle(numbers);
+
+                let idx = 0;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        this.board[row + i][col + j] = numbers[idx++];
+                    }
+                }
+            }
+
+            // 洗牌算法
+            shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            // 检查数字是否可以放置
+            isValid(board, row, col, num) {
+                // 检查行
+                for (let x = 0; x < 9; x++) {
+                    if (board[row][x] === num) return false;
+                }
+
+                // 检查列
+                for (let x = 0; x < 9; x++) {
+                    if (board[x][col] === num) return false;
+                }
+
+                // 检查 3x3 宫格
+                const startRow = row - row % 3;
+                const startCol = col - col % 3;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (board[startRow + i][startCol + j] === num) return false;
+                    }
+                }
+
+                return true;
+            }
+
+            // 求解数独（回溯算法）
+            solveSudoku(board) {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (board[row][col] === 0) {
+                            // 尝试 1-9 的数字
+                            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+                            this.shuffle(numbers); // 随机化以生成不同的数独
+
+                            for (let num of numbers) {
+                                if (this.isValid(board, row, col, num)) {
+                                    board[row][col] = num;
+
+                                    if (this.solveSudoku(board)) {
+                                        return true;
+                                    }
+
+                                    board[row][col] = 0;
+                                }
+                            }
+
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            // 根据难度移除数字
+            removeNumbers() {
+                const cellsToRemove = this.difficultySettings[this.difficulty].cellsToRemove;
+                this.initialBoard = this.board.map(row => [...row]);
+
+                let removed = 0;
+                while (removed < cellsToRemove) {
+                    const row = Math.floor(Math.random() * 9);
+                    const col = Math.floor(Math.random() * 9);
+
+                    if (this.board[row][col] !== 0) {
+                        this.board[row][col] = 0;
+                        removed++;
+                    }
+                }
+
+                // 保存初始棋盘
+                this.initialBoard = this.board.map(row => [...row]);
+            }
+
+            // 选择格子
+            selectCell(index) {
+                const row = Math.floor(index / 9);
+                const col = index % 9;
+
+                // 不能选择初始数字
+                if (this.initialBoard[row][col] !== 0) {
+                    return;
+                }
+
+                this.selectedCell = { row, col, index };
+                this.render();
+            }
+
+            // 输入数字
+            inputNumber(number) {
+                if (!this.selectedCell) return;
+
+                const { row, col } = this.selectedCell;
+
+                // 清除
+                if (number === 0) {
+                    this.board[row][col] = 0;
+                    this.render();
+                    return;
+                }
+
+                // 输入数字
+                this.board[row][col] = number;
+
+                // 检查是否正确
+                if (this.solution[row][col] !== number) {
+                    this.errors++;
+                    this.updateErrors();
+
+                    // 短暂显示错误
+                    setTimeout(() => {
+                        this.render();
+                    }, 500);
+                }
+
+                this.render();
+
+                // 检查是否完成
+                if (this.isComplete()) {
+                    this.stopTimer();
+                    this.showCelebration();
+                }
+            }
+
+            // 提示功能
+            showHint() {
+                if (!this.selectedCell) {
+                    alert('请先选择一个格子！');
+                    return;
+                }
+
+                const { row, col } = this.selectedCell;
+
+                if (this.board[row][col] !== 0) {
+                    alert('这个格子已经有数字了！');
+                    return;
+                }
+
+                // 显示正确答案
+                this.board[row][col] = this.solution[row][col];
+                this.render();
+
+                // 检查是否完成
+                if (this.isComplete()) {
+                    this.stopTimer();
+                    this.showCelebration();
+                }
+            }
+
+            // 检查答案
+            checkSolution() {
+                let hasErrors = false;
+
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (this.board[row][col] !== 0 &&
+                            this.board[row][col] !== this.solution[row][col]) {
+                            hasErrors = true;
+                            // 临时标记错误
+                            const index = row * 9 + col;
+                            const cell = document.querySelector(`[data-index="${index}"]`);
+                            cell.classList.add('error');
+                        }
+                    }
+                }
+
+                if (!hasErrors) {
+                    if (this.isComplete()) {
+                        this.stopTimer();
+                        this.showCelebration();
+                    } else {
+                        alert('目前填写的都正确，继续加油！');
+                    }
+                } else {
+                    setTimeout(() => {
+                        this.render();
+                    }, 1000);
+                }
+            }
+
+            // 检查是否完成
+            isComplete() {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (this.board[row][col] === 0) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            // 渲染棋盘
+            render() {
+                const cells = document.querySelectorAll('.cell');
+
+                cells.forEach((cell, index) => {
+                    const row = Math.floor(index / 9);
+                    const col = index % 9;
+                    const value = this.board[row][col];
+
+                    // 清除所有样式
+                    cell.className = 'cell';
+                    cell.textContent = value || '';
+
+                    // 初始数字
+                    if (this.initialBoard[row][col] !== 0) {
+                        cell.classList.add('initial');
+                    }
+
+                    // 选中的格子
+                    if (this.selectedCell && this.selectedCell.index === index) {
+                        cell.classList.add('selected');
+                    }
+
+                    // 高亮相同行列和宫格
+                    if (this.selectedCell) {
+                        const selectedRow = this.selectedCell.row;
+                        const selectedCol = this.selectedCell.col;
+
+                        if (row === selectedRow || col === selectedCol) {
+                            cell.classList.add('highlighted');
+                        }
+
+                        // 同一个 3x3 宫格
+                        if (Math.floor(row / 3) === Math.floor(selectedRow / 3) &&
+                            Math.floor(col / 3) === Math.floor(selectedCol / 3)) {
+                            cell.classList.add('highlighted');
+                        }
+                    }
+
+                    // 高亮相同数字
+                    if (this.selectedCell && value !== 0) {
+                        const selectedValue = this.board[this.selectedCell.row][this.selectedCell.col];
+                        if (value === selectedValue) {
+                            cell.classList.add('same-number');
+                        }
+                    }
+
+                    // 错误标记
+                    if (value !== 0 && this.solution[row][col] !== value) {
+                        cell.classList.add('error');
+                    }
+                });
+            }
+
+            // 计时器
+            startTimer() {
+                this.startTime = Date.now();
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const seconds = (elapsed % 60).toString().padStart(2, '0');
+                    document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+            }
+
+            // 更新错误计数
+            updateErrors() {
+                document.getElementById('errors').textContent = this.errors;
+            }
+
+            // 显示庆祝动画
+            showCelebration() {
+                const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+
+                const overlay = document.createElement('div');
+                overlay.className = 'overlay';
+
+                const celebration = document.createElement('div');
+                celebration.className = 'celebration';
+                celebration.innerHTML = `
+                    <h2>🎉 恭喜完成！</h2>
+                    <p>用时: ${minutes}分${seconds}秒</p>
+                    <p>错误: ${this.errors}次</p>
+                    <button class="btn-primary" onclick="location.reload()">再来一局</button>
+                `;
+
+                document.body.appendChild(overlay);
+                document.body.appendChild(celebration);
+
+                // 五彩纸屑
+                this.createConfetti();
+
+                // 点击遮罩关闭
+                overlay.addEventListener('click', () => {
+                    overlay.remove();
+                    celebration.remove();
+                });
+            }
+
+            // 创建五彩纸屑
+            createConfetti() {
+                const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+
+                for (let i = 0; i < 50; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.className = 'confetti';
+                        confetti.style.left = Math.random() * window.innerWidth + 'px';
+                        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        confetti.style.animationDelay = Math.random() * 2 + 's';
+                        document.body.appendChild(confetti);
+
+                        setTimeout(() => confetti.remove(), 3000);
+                    }, i * 50);
+                }
+            }
+        }
+
+        // 启动游戏
+        const game = new SudokuGame();
+    </script>
+</body>
+</html>
