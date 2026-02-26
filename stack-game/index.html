@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>叠叠乐挑战 - Stack Challenge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .score-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            color: #667eea;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        canvas {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(to bottom, #87ceeb, #e0f6ff);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+
+        .game-over.show {
+            display: block;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .game-over h2 {
+            color: #f5576c;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .game-over p {
+            color: #666;
+            font-size: 1.3em;
+            margin-bottom: 30px;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .new-record {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            canvas {
+                width: 100% !important;
+                height: auto !important;
+            }
+
+            .score-container {
+                gap: 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 叠叠乐挑战</h1>
+        <div class="score-container">
+            <div class="score-item">
+                <div class="score-label">分数</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">最高分</div>
+                <div class="score-value" id="highScore">0</div>
+            </div>
+        </div>
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <div class="instructions">
+            点击或按空格键放置方块
+        </div>
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <div id="newRecordBadge" class="new-record" style="display: none;">
+            🎉 新记录！
+        </div>
+        <h2>游戏结束！</h2>
+        <p>你的分数: <span id="finalScore">0</span></p>
+        <button class="btn-restart" onclick="restartGame()">再来一局</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 游戏状态
+        let gameState = 'playing'; // 'playing' 或 'gameover'
+        let score = 0;
+        let highScore = localStorage.getItem('stackHighScore') || 0;
+
+        // 方块设置
+        let blockWidth = 100;
+        let blockHeight = 30;
+        let blockSpeed = 2;
+
+        // 当前移动的方块
+        let currentBlock = {
+            x: 0,
+            y: 50,
+            width: blockWidth,
+            height: blockHeight,
+            direction: 1, // 1 为右，-1 为左
+            color: 'hsl(0, 70%, 60%)'
+        };
+
+        // 已堆叠的方块
+        let stackedBlocks = [];
+
+        // 掉落的方块碎片（动画用）
+        let fallingPieces = [];
+
+        // 粒子效果
+        let particles = [];
+
+        // 初始化第一个底部方块
+        stackedBlocks.push({
+            x: canvas.width / 2 - blockWidth / 2,
+            y: canvas.height - blockHeight,
+            width: blockWidth,
+            height: blockHeight,
+            color: 'hsl(0, 70%, 60%)'
+        });
+
+        // 更新高分显示
+        document.getElementById('highScore').textContent = highScore;
+
+        // 获取颜色（根据层数）
+        function getColor(level) {
+            const hue = (level * 30) % 360;
+            return `hsl(${hue}, 70%, 60%)`;
+        }
+
+        // 重置当前方块
+        function resetCurrentBlock() {
+            const lastBlock = stackedBlocks[stackedBlocks.length - 1];
+            currentBlock = {
+                x: 0,
+                y: lastBlock.y - blockHeight - 10,
+                width: lastBlock.width,
+                height: blockHeight,
+                direction: Math.random() > 0.5 ? 1 : -1,
+                color: getColor(stackedBlocks.length)
+            };
+            blockSpeed = Math.min(2 + score * 0.1, 6);
+        }
+
+        // 移动当前方块
+        function moveCurrentBlock() {
+            if (gameState !== 'playing') return;
+
+            currentBlock.x += blockSpeed * currentBlock.direction;
+
+            // 碰到边界反转方向
+            if (currentBlock.x <= 0) {
+                currentBlock.x = 0;
+                currentBlock.direction = 1;
+            } else if (currentBlock.x + currentBlock.width >= canvas.width) {
+                currentBlock.x = canvas.width - currentBlock.width;
+                currentBlock.direction = -1;
+            }
+        }
+
+        // 放置方块
+        function placeBlock() {
+            if (gameState !== 'playing') return;
+
+            const lastBlock = stackedBlocks[stackedBlocks.length - 1];
+
+            // 计算重叠区域
+            const overlapLeft = Math.max(currentBlock.x, lastBlock.x);
+            const overlapRight = Math.min(
+                currentBlock.x + currentBlock.width,
+                lastBlock.x + lastBlock.width
+            );
+            const overlapWidth = overlapRight - overlapLeft;
+
+            // 完全没对准
+            if (overlapWidth <= 0) {
+                gameOver();
+                return;
+            }
+
+            // 创建掉落的碎片
+            if (currentBlock.x < lastBlock.x) {
+                // 左边掉落
+                fallingPieces.push({
+                    x: currentBlock.x,
+                    y: currentBlock.y,
+                    width: lastBlock.x - currentBlock.x,
+                    height: blockHeight,
+                    color: currentBlock.color,
+                    velocity: 0,
+                    alpha: 1
+                });
+            }
+            if (currentBlock.x + currentBlock.width > lastBlock.x + lastBlock.width) {
+                // 右边掉落
+                const cutX = lastBlock.x + lastBlock.width;
+                fallingPieces.push({
+                    x: cutX,
+                    y: currentBlock.y,
+                    width: (currentBlock.x + currentBlock.width) - cutX,
+                    height: blockHeight,
+                    color: currentBlock.color,
+                    velocity: 0,
+                    alpha: 1
+                });
+            }
+
+            // 添加新的堆叠方块
+            stackedBlocks.push({
+                x: overlapLeft,
+                y: currentBlock.y,
+                width: overlapWidth,
+                height: blockHeight,
+                color: currentBlock.color
+            });
+
+            // 更新分数
+            score++;
+            document.getElementById('score').textContent = score;
+
+            // 检查是否需要向下移动视图
+            if (stackedBlocks.length > 10) {
+                // 所有方块向下移动
+                stackedBlocks.forEach(block => {
+                    block.y += blockHeight;
+                });
+            }
+
+            // 重置当前方块
+            resetCurrentBlock();
+        }
+
+        // 更新掉落碎片
+        function updateFallingPieces() {
+            fallingPieces.forEach((piece, index) => {
+                piece.velocity += 0.5; // 重力
+                piece.y += piece.velocity;
+                piece.alpha -= 0.02; // 淡出
+
+                if (piece.alpha <= 0 || piece.y > canvas.height) {
+                    fallingPieces.splice(index, 1);
+                }
+            });
+        }
+
+        // 创建粒子
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 30; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    color: color,
+                    alpha: 1,
+                    size: Math.random() * 5 + 2
+                });
+            }
+        }
+
+        // 更新粒子
+        function updateParticles() {
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.vy += 0.3; // 重力
+                particle.alpha -= 0.02;
+
+                if (particle.alpha <= 0 || particle.y > canvas.height) {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+
+        // 游戏结束
+        function gameOver() {
+            gameState = 'gameover';
+
+            // 创建爆炸粒子效果
+            const colors = ['#ff6b6b', '#f093fb', '#4facfe', '#43e97b', '#ffd93d'];
+            for (let i = 0; i < 50; i++) {
+                createParticles(
+                    currentBlock.x + currentBlock.width / 2,
+                    currentBlock.y,
+                    colors[Math.floor(Math.random() * colors.length)]
+                );
+            }
+
+            // 更新最高分
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('stackHighScore', highScore);
+                document.getElementById('highScore').textContent = highScore;
+                document.getElementById('newRecordBadge').style.display = 'block';
+            } else {
+                document.getElementById('newRecordBadge').style.display = 'none';
+            }
+
+            // 显示游戏结束界面
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').classList.add('show');
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            gameState = 'playing';
+            score = 0;
+            document.getElementById('score').textContent = score;
+
+            stackedBlocks = [{
+                x: canvas.width / 2 - blockWidth / 2,
+                y: canvas.height - blockHeight,
+                width: blockWidth,
+                height: blockHeight,
+                color: 'hsl(0, 70%, 60%)'
+            }];
+
+            fallingPieces = [];
+            particles = [];
+            blockSpeed = 2;
+
+            resetCurrentBlock();
+
+            document.getElementById('gameOver').classList.remove('show');
+        }
+
+        // 绘制方块
+        function drawBlock(block) {
+            ctx.fillStyle = block.color;
+            ctx.fillRect(block.x, block.y, block.width, block.height);
+
+            // 添加高光效果
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(block.x, block.y, block.width, block.height / 3);
+
+            // 边框
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(block.x, block.y, block.width, block.height);
+        }
+
+        // 绘制掉落碎片
+        function drawFallingPiece(piece) {
+            ctx.save();
+            ctx.globalAlpha = piece.alpha;
+            ctx.fillStyle = piece.color;
+            ctx.fillRect(piece.x, piece.y, piece.width, piece.height);
+            ctx.restore();
+        }
+
+        // 绘制粒子
+        function drawParticle(particle) {
+            ctx.save();
+            ctx.globalAlpha = particle.alpha;
+            ctx.fillStyle = particle.color;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // 绘制游戏
+        function draw() {
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制背景渐变
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87ceeb');
+            gradient.addColorStop(1, '#e0f6ff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制堆叠的方块
+            stackedBlocks.forEach(block => drawBlock(block));
+
+            // 绘制当前移动的方块
+            if (gameState === 'playing') {
+                drawBlock(currentBlock);
+
+                // 绘制虚线辅助线
+                ctx.setLineDash([5, 5]);
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(currentBlock.x + currentBlock.width / 2, currentBlock.y);
+                ctx.lineTo(currentBlock.x + currentBlock.width / 2, canvas.height);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 绘制掉落的碎片
+            fallingPieces.forEach(piece => drawFallingPiece(piece));
+
+            // 绘制粒子
+            particles.forEach(particle => drawParticle(particle));
+        }
+
+        // 游戏循环
+        function gameLoop() {
+            moveCurrentBlock();
+            updateFallingPieces();
+            updateParticles();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 输入处理
+        canvas.addEventListener('click', placeBlock);
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                placeBlock();
+            }
+        });
+
+        // 开始游戏
+        resetCurrentBlock();
+        gameLoop();
+    </script>
+</body>
+</html>
