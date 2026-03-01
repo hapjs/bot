@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票行情 - Bot Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1e2e 50%, #0f1419 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #ffffff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .search-box {
+            max-width: 500px;
+            margin: 2rem auto;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.5);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .search-box input::placeholder {
+            color: #64748b;
+        }
+
+        .search-box button {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .stock-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .stock-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+        }
+
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stock-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .stock-code {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .stock-price {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+
+        .stock-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .stock-change.up {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .stock-change.down {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .stock-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+
+        .detail-value {
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            color: #ef4444;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1) rotate(180deg);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .stock-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../" class="back-link">← 返回首页</a>
+        
+        <header>
+            <h1>📈 A 股行情</h1>
+            <p class="subtitle">实时股票行情查询</p>
+        </header>
+
+        <div class="search-box">
+            <input type="text" id="stockInput" placeholder="输入股票代码，如：sh600000 或 sz000001" />
+            <button onclick="searchStock()">查询</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            正在加载行情数据...
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="stockGrid" class="stock-grid"></div>
+
+        <button class="refresh-btn" onclick="loadDefaultStocks()" title="刷新">🔄</button>
+    </div>
+
+    <script>
+        // 默认股票池
+        const defaultStocks = [
+            { code: 'sh600000', name: '浦发银行' },
+            { code: 'sh600519', name: '贵州茅台' },
+            { code: 'sz000001', name: '平安银行' },
+            { code: 'sh601318', name: '中国平安' },
+            { code: 'sz000858', name: '五粮液' },
+            { code: 'sz300750', name: '宁德时代' }
+        ];
+
+        // 加载默认股票
+        async function loadDefaultStocks() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('stockGrid').innerHTML = '';
+
+            try {
+                const promises = defaultStocks.map(stock => fetchStockData(stock.code, stock.name));
+                await Promise.all(promises);
+            } catch (e) {
+                showError('加载失败：' + e.message);
+            }
+
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // 查询股票
+        async function searchStock() {
+            const input = document.getElementById('stockInput').value.trim();
+            if (!input) {
+                showError('请输入股票代码');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('stockGrid').innerHTML = '';
+
+            const codes = input.split(/[\s,]+/).filter(c => c.length > 0);
+            
+            try {
+                for (const code of codes) {
+                    await fetchStockData(code);
+                }
+            } catch (e) {
+                showError('查询失败：' + e.message);
+            }
+
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // 获取股票数据
+        async function fetchStockData(code, name = null) {
+            // 使用代理解决跨域问题
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`http://qt.gtimg.cn/q=${code}`);
+            
+            const response = await fetch(proxyUrl);
+            const text = await response.text();
+            
+            // 解析腾讯财经格式
+            const match = text.match(/="(.+)"/);
+            if (!match) {
+                throw new Error(`未找到股票 ${code} 的数据`);
+            }
+
+            const parts = match[1].split('~');
+            const stockName = name || parts[1] || '未知';
+            const currentPrice = parseFloat(parts[3]) || 0;
+            const openPrice = parseFloat(parts[5]) || 0;
+            const prevClose = parseFloat(parts[4]) || 0;
+            const high = parseFloat(parts[33]) || 0;
+            const low = parseFloat(parts[34]) || 0;
+            const volume = parseInt(parts[6]) || 0;
+            const amount = (parseFloat(parts[37]) / 10000) || 0;
+            const changePercent = parseFloat(parts[47]) || 0;
+            const changeAmount = parseFloat(parts[48]) || 0;
+            const pe = parseFloat(parts[39]) || 0;
+            const pb = parseFloat(parts[41]) || 0;
+            const updateTime = parts[30] || '';
+
+            renderStockCard({
+                code,
+                name: stockName,
+                currentPrice,
+                openPrice,
+                prevClose,
+                high,
+                low,
+                volume,
+                amount,
+                changePercent,
+                changeAmount,
+                pe,
+                pb,
+                updateTime
+            });
+        }
+
+        // 渲染股票卡片
+        function renderStockCard(stock) {
+            const grid = document.getElementById('stockGrid');
+            const isUp = stock.changePercent >= 0;
+
+            const card = document.createElement('div');
+            card.className = 'stock-card';
+            card.innerHTML = `
+                <div class="stock-header">
+                    <div>
+                        <div class="stock-name">${stock.name}</div>
+                        <div class="stock-code">${stock.code.toUpperCase()}</div>
+                    </div>
+                </div>
+                <div class="stock-price">¥${stock.currentPrice.toFixed(2)}</div>
+                <div class="stock-change ${isUp ? 'up' : 'down'}">
+                    ${isUp ? '↑' : '↓'} ${Math.abs(stock.changePercent).toFixed(2)}% (${stock.changeAmount > 0 ? '+' : ''}${stock.changeAmount.toFixed(2)})
+                </div>
+                <div class="stock-details">
+                    <div class="detail-item">
+                        <span class="detail-label">开盘</span>
+                        <span class="detail-value">¥${stock.openPrice.toFixed(2)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">昨收</span>
+                        <span class="detail-value">¥${stock.prevClose.toFixed(2)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">最高</span>
+                        <span class="detail-value">¥${stock.high.toFixed(2)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">最低</span>
+                        <span class="detail-value">¥${stock.low.toFixed(2)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">成交量</span>
+                        <span class="detail-value">${(stock.volume / 10000).toFixed(2)}万手</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">成交额</span>
+                        <span class="detail-value">${stock.amount.toFixed(2)}万</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">市盈率</span>
+                        <span class="detail-value">${stock.pe.toFixed(2)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">市净率</span>
+                        <span class="detail-value">${stock.pb.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+
+            grid.appendChild(card);
+        }
+
+        // 显示错误
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        // 回车搜索
+        document.getElementById('stockInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchStock();
+            }
+        });
+
+        // 页面加载时加载默认股票
+        loadDefaultStocks();
+    </script>
+</body>
+</html>

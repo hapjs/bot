@@ -1,0 +1,27 @@
+{
+  "name": "stack-challenge-engine",
+  "version": "2.0.0",
+  "description": "叠叠乐挑战 - Phaser 3 工程化版本",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && cp -r dist/* ../stack-game/"
+  },
+  "keywords": [
+    "game",
+    "phaser",
+    "stack",
+    "html5"
+  ],
+  "author": "hap",
+  "license": "MIT",
+  "dependencies": {
+    "phaser": "^3.80.1"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
