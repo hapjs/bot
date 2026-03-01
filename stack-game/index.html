@@ -559,9 +559,10 @@
 
         // 初始化游戏
         function initGame() {
+            // 底部基座方块 - 从更下方开始，留出更多可视空间
             stackedBlocks = [{
                 x: canvas.width / 2 - baseBlockWidth / 2,
-                y: canvas.height - blockHeight - 20,
+                y: canvas.height - blockHeight * 2 - 30,
                 width: baseBlockWidth,
                 height: blockHeight,
                 color: getColor(0)
@@ -589,7 +590,7 @@
             
             currentBlock = {
                 x: 0,
-                y: lastBlock.y - blockHeight - 15,
+                y: lastBlock.y - blockHeight - 25,  // 增加间距，让方块出现位置更低
                 width: blockWidth,
                 height: blockHeight,
                 direction: Math.random() > 0.5 ? 1 : -1,
@@ -718,8 +719,8 @@
                 addFloatingText(`第 ${currentLevel} 关!`, canvas.width / 2, 100, '#667eea');
             }
             
-            // 视图滚动
-            if (stackedBlocks.length > 12) {
+            // 视图滚动 - 更早开始滚动，保持游戏区域在可视范围内
+            if (stackedBlocks.length > 8) {
                 const scrollAmount = blockHeight;
                 stackedBlocks.forEach(block => {
                     block.y += scrollAmount;
